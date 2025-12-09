@@ -27,12 +27,14 @@ Sử dụng Git để tải mã nguồn của dự án:
 ```bash
 git clone <URL_của_repository_của_bạn>
 cd UTEZone
+```bash
 
 ### 2. Khởi động Dịch vụ với Docker Compose
 Chạy các dịch vụ chính (ví dụ: Cơ sở dữ liệu, Caching) đã được định nghĩa trong file `docker-compose.yml`. Đây là bước thiết yếu đầu tiên.
 
 ```bash
 docker-compose up -d
+```bash
 
 ### 3. Thiết lập Backend
 Di chuyển vào thư mục backend và cài đặt các thư viện cần thiết:
@@ -41,6 +43,7 @@ Di chuyển vào thư mục backend và cài đặt các thư viện cần thi�
 cd backend
 pip install -r requirements.txt
 cd .. # Trở về thư mục gốc của dự án
+```bash
 
 ### 4. Thiết lập Frontend
 Di chuyển vào thư mục frontend và cài đặt các module Node cần thiết để chạy ứng dụng:
@@ -49,6 +52,7 @@ Di chuyển vào thư mục frontend và cài đặt các module Node cần thi�
 cd frontend
 npm install
 cd .. # Trở về thư mục gốc của dự án
+```bash
 
 ## ▶️ Chạy Ứng dụng
 Sau khi cài đặt xong các dependencies, bạn cần khởi động máy chủ Backend và Frontend.
@@ -59,6 +63,7 @@ Di chuyển vào thư mục ứng dụng backend và khởi động máy chủ b
 ```bash
 cd backend/app
 uvicorn main:app --reload
+```bash
 
 ### 2. Khởi động Ứng dụng Frontend
 Mở một cửa sổ terminal mới, di chuyển vào thư mục frontend, và chạy lệnh:
@@ -66,6 +71,7 @@ Mở một cửa sổ terminal mới, di chuyển vào thư mục frontend, và 
 ```bash
 cd frontend
 npm run dev
+```bash
 
 ### 3. Truy cập ứng dụng
 Ứng dụng frontend sẽ mở trong trình duyệt tại http://localhost:5173
