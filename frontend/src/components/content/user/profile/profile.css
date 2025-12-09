@@ -1,0 +1,20 @@
+.Profile {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin-left: 500px;
+}
+
+.header {
+  flex: none;         /* không dùng flex-grow/shrink */
+  height: auto;       /* chiều cao tính theo nội dung */
+  min-height: 300px; 
+  max-width: 600px;
+}
+.post {
+  flex: 1;
+  overflow-y: auto;
+}

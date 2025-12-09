@@ -1,0 +1,83 @@
+/* Container để click ra ngoài là đóng */
+.notificationContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+/* Modal nằm ngay phía dưới icon chuông */
+.notificationModal {
+  position: absolute;
+  top: 60px; /* Tùy vị trí icon chuông, bạn có thể chỉnh */
+  right: 20px; /* căn sát góc phải */
+  
+  width: 350px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.2s ease;
+}
+
+/* Danh sách thông báo */
+/* Ẩn thanh cuộn Chrome, Safari, Edge */
+.notificationList::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Ẩn thanh cuộn Firefox */
+.notificationList {
+  scrollbar-width: none;
+}
+
+/* Ẩn thanh cuộn IE & Edge Legacy */
+.notificationList {
+  -ms-overflow-style: none;
+}
+
+
+/* Item thông báo */
+.notificationItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.notificationItem:hover {
+  background: #f5f5f5;
+}
+
+/* Avatar người gửi */
+.notificationAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Nội dung thông báo */
+.notificationContent {
+  flex: 1;
+}
+
+.notificationContent p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.notificationContent span {
+  font-size: 12px;
+  color: gray;
+  margin-top: 2px;
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

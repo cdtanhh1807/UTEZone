@@ -1,0 +1,128 @@
+:root {
+  --primary-color: #87cefa; /* light sky blue */
+  --secondary-color: #ffffff;
+  --text-color: #333;
+  --btn-primary-color: #1e90ff;
+  --btn-primary-hover: #1c86ee;
+  --btn-secondary-color: #ffffff;
+  --btn-secondary-border: #1e90ff;
+}
+
+/* Container toàn trang */
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;       /* full height màn hình */
+  width: 100vw;            /* full width màn hình */
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;        /* tránh scroll nếu ko cần */
+}
+
+/* Header */
+.welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 3rem;
+  position: absolute;      /* cố định góc trên */
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.1); /* trong suốt */
+  z-index: 10;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--secondary-color);
+}
+
+.header-buttons button {
+  margin-left: 1rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-login {
+  background: var(--secondary-color);
+  color: var(--btn-primary-color);
+}
+
+.btn-login:hover {
+  background: #f0f0f0;
+}
+
+.btn-signup {
+  background: var(--btn-primary-color);
+  color: var(--secondary-color);
+}
+
+.btn-signup:hover {
+  background: var(--btn-primary-hover);
+}
+
+/* Phần chính - nằm giữa màn hình */
+.welcome-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  height: 100vh;          /* chiếm full viewport height */
+}
+
+/* Tiêu đề */
+.welcome-title {
+  font-size: 4rem;
+  font-weight: bold;
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+/* Subtitle */
+.welcome-subtitle {
+  font-size: 1.5rem;
+  color: var(--secondary-color);
+  margin-bottom: 2rem;
+  max-width: 700px;
+}
+
+/* Nút hành động */
+.welcome-actions button {
+  margin: 0 0.5rem;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-color);
+  color: var(--secondary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--btn-secondary-color);
+  color: var(--btn-primary-color);
+  border: 2px solid var(--btn-secondary-border);
+}
+
+.btn-secondary:hover {
+  background-color: #f0f0f0;
+}

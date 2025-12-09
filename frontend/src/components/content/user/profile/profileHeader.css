@@ -1,0 +1,125 @@
+.profileHeader {
+  display: flex;
+  gap: 90px;
+  padding: 20px 40px;
+  padding-bottom: 0px;
+  border-radius: 12px;
+  background-color: #fff;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: 800px;
+  margin-left: 50px;
+}
+
+/* Avatar */
+.header-imageDIv {
+  width: 200px;
+  height: 200px;
+  max-width: 200px;
+  max-height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  border-radius: 50%; /* làm tròn khung */
+  padding: 5px;
+  border: 3px solid red;
+  overflow: hidden; /* quan trọng để ảnh không bị vươn ra */
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* giữ tỉ lệ ảnh, cắt phần thừa */
+  border-radius: 50%; /* làm tròn ảnh */
+}
+
+/* Thông tin tổng thể */
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+/* Hàng username + button */
+.profile-username-time {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.profile-username {
+  font-size: 19px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.btn-edit-profile,
+.btn-follow,
+.btn-message {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.btn-edit-profile:hover{
+  background-color: #f5efef
+}
+
+.btn-follow {
+  background-color: #0095f6;
+  color: white;
+}
+
+.btn-follow:hover {
+  background-color: #007ad9;
+}
+
+.btn-message {
+  background-color: #efefef;
+  color: #333;
+}
+
+.btn-message:hover {
+  background-color: #e0e0e0;
+}
+
+.profile-overview {
+  display: flex;
+  gap: 20px;
+}
+
+.number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.label {
+  font-size: 14px;
+    color:rgb(45, 150, 211) ;
+}
+.profile-description {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.full-name {
+  font-weight: 600;
+}
+.bio {
+  font-size: 14px;
+  font-style: italic;
+  display: block;      /* hoặc inline-block */
+  max-width: 450px;     /* đảm bảo không vượt khung */
+  word-wrap: break-word; /* ngắt từ nếu quá dài */
+  white-space: normal;
+}

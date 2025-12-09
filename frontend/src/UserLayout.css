@@ -1,0 +1,57 @@
+@font-face {
+  font-family: 'Instagram Sans';
+  src: url('/fonts/InstagramSans-Regular.ttf') format('truetype');
+}
+
+body {
+  font-family: 'Instagram Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 203vh;
+}
+
+/* Header */
+.main-header {
+  height: 60px; /* hoặc tuỳ chỉnh theo thiết kế */
+  width: 100%;
+  background-color: white; /* có thể đổi màu nếu muốn */
+  display: flex;
+  align-items: center;
+  /* padding: 0 20px; */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+/* Body dưới header */
+.main-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* LeftSide (menu bên trái) */
+.main-left-side {
+  flex: 0.13;    
+  background-color: white;
+  border-right: 1px solid #ddd;
+  overflow-y: auto; 
+}
+
+.main-right-side {
+  flex: 0.87;
+  margin-left: 300px;
+  background-color: white;
+  overflow-y: auto;   /* cuộn theo chiều dọc */
+  overflow-x: hidden; /* không cho phép cuộn ngang */
+}
+.main-right-side::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Edge */
+}
+

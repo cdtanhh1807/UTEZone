@@ -1,0 +1,53 @@
+.conv-list-container {
+  width: 220px;
+  border-right: 1px solid #e5e5e5;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.conv-item {
+  padding: 12px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.conv-item:hover {
+  background: #f0f7ff;
+}
+
+.conv-item.active {
+  background: #dceeff;
+}
+
+.conv-row {
+  display: flex;
+  align-items: center;
+}
+
+.conv-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.new-msg .conv-name {
+  font-weight: 700;
+}
+
+.conv-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff3b30;
+  border-radius: 50%;
+  margin-left: 6px;
+}
+
+.conv-last-msg {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

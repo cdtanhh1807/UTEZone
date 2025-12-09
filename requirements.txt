@@ -1,0 +1,13 @@
+uvicorn
+fastapi
+motor
+pymongo
+python-jose[cryptography]
+passlib
+redis
+requests
+pydantic[email]
+rapidfuzz
+pytz
+minio
+python-multipart
