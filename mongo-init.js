@@ -28,3 +28,14 @@ db.account.insertOne({
   },
   permission: { pernum: '111', validity: '3333-12-12T12:00:00Z' }
 });
+
+db.post.createIndex({ visibility: 1, status: 1, createdAt: -1 });
+db.post.createIndex({ createdBy: 1, createdAt: -1 });
+db.post.createIndex({ "react.love": 1 });
+db.post.createIndex({ "react.like": 1 });
+db.post.createIndex({ "react.haha": 1 });
+db.post.createIndex({ "react.wow": 1 });
+db.post.createIndex({ "react.sad": 1 });
+db.post.createIndex({ "react.angry": 1 });
+db.post.createIndex({ "comments.commentBy": 1 });
+db.account.createIndex({ email: 1 });
