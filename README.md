@@ -25,7 +25,7 @@ Làm theo các bước dưới đây để thiết lập và chạy dự án UTE
 Sử dụng Git để tải mã nguồn của dự án:
 
 ```bash
-git clone <URL_của_repository_của_bạn>
+git clone https://github.com/cdtanhh1807/UTEZone.git
 cd UTEZone
 ```
 
@@ -37,31 +37,26 @@ docker-compose up -d
 ```
 
 ### 3. Thiết lập Backend
-Di chuyển vào thư mục backend và cài đặt các thư viện cần thiết:
+Cài đặt các thư viện cần thiết cho backend:
 
 ```bash
-cd backend
 pip install -r requirements.txt
-cd .. # Trở về thư mục gốc của dự án
 ```
 
 ### 4. Thiết lập Frontend
 Di chuyển vào thư mục frontend và cài đặt các module Node cần thiết để chạy ứng dụng:
 
 ```bash
-cd frontend
 npm install
-cd .. # Trở về thư mục gốc của dự án
 ```
 
 ## ▶️ Chạy Ứng dụng
 Sau khi cài đặt xong các dependencies, bạn cần khởi động máy chủ Backend và Frontend.
 
 ### 1. Khởi động Máy chủ Backend
-Di chuyển vào thư mục ứng dụng backend và khởi động máy chủ bằng lệnh uvicorn.
+Di chuyển vào thư mục ứng dụng backend/app và khởi động máy chủ bằng lệnh:.
 
 ```bash
-cd backend/app
 uvicorn main:app --reload
 ```
 
@@ -69,7 +64,6 @@ uvicorn main:app --reload
 Mở một cửa sổ terminal mới, di chuyển vào thư mục frontend, và chạy lệnh:
 
 ```bash
-cd frontend
 npm run dev
 ```
 
