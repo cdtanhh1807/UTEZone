@@ -50,6 +50,17 @@ Di chuyển vào thư mục frontend và cài đặt các module Node cần thi�
 npm install
 ```
 
+### 5. Tạo kho lưu trữ MinIO
+Truy cập:
+
+```bash
+http://localhost:9001
+```
+
+- **Đăng nhập với Username: minioadmin và Password: minioadmin
+- **Nhấn Create Bucket
+- **Tên Bucket là ute-zone
+
 ## ▶️ Chạy Ứng dụng
 Sau khi cài đặt xong các dependencies, bạn cần khởi động máy chủ Backend và Frontend.
 

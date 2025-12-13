@@ -4,7 +4,7 @@ import os
 MINIO_URL = os.getenv("MINIO_URL", "localhost:9000")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
-MINIO_BUCKET = os.getenv("MINIO_BUCKET", "uteforum")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", ute-zone")
 
 minio_client = Minio(
     MINIO_URL,
