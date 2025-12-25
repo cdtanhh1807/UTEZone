@@ -8,11 +8,13 @@ from redis import RedisError
 import requests
 from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
+from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.google_auth_request import GoogleAuthRequest
 from dto.account.request.register_user_request import RegisterUserRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
+from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.register_user_response import RegisterUserResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from models.account_model import Account
@@ -88,7 +90,7 @@ class AccountServiceImpl(IAccountService):
 
         #Cấp quyền
         user_data["permission"] = {
-            "pernum": "11",
+            "pernum": "111",
             "validity": "3333-12-12T12:00:00Z"
         }
 
@@ -205,6 +207,12 @@ class AccountServiceImpl(IAccountService):
                 "role": "user",
                 "status": "active"
             }
+
+            new_user["permission"] = {
+                "pernum": "111",
+                "validity": "3333-12-12T12:00:00Z"
+            }
+
             created = await AccountRepository.insert(new_user)
             user = created
         else:
@@ -323,3 +331,11 @@ class AccountServiceImpl(IAccountService):
         if not account_data:
             return None
         return Account(**bson_to_dict(account_data))
+    
+    async def get_relation(self, req: GetRelationRequest) -> Optional[GetRelationResponse]:
+        dic = await AccountRepository.get_relation_by_email(req.email)
+        if dic:
+            rs: GetRelationResponse = GetRelationResponse(followed=dic.get("followed"), followers=dic.get("followers"), blocks=dic.get("blocks"))
+            print(rs)
+            return rs
+        return None

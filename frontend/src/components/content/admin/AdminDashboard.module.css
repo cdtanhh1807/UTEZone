@@ -13,6 +13,7 @@
   --green-500: #00d68f;
   --orange: #fa0;
   --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
 }
 
 /* ---------- LAYOUT ---------- */
@@ -20,6 +21,7 @@
   display: flex;
   height: 100vh;
   background: var(--gray-50);
+  min-width: 203vh;
 }
 
 .main {
@@ -46,6 +48,18 @@
   background: var(--white);
   box-shadow: var(--shadow);
   padding: 16px 0;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 .logo {
@@ -56,25 +70,27 @@
 
 .navLink,
 .navActive {
-  display: block;
-  padding: 12px 24px;
-  color: var(--gray-600);
-  text-decoration: none;
+  display: block !important;
+  padding: 12px 24px !important;
+  color: var(--gray-600) !important;
+  text-decoration: none !important;
+
+  font-weight: 600 !important;
 }
 
 .navActive {
-  color: var(--blue-600);
-  background: var(--gray-100);
-  border-right: 3px solid var(--blue-600);
+  color: var(--blue-600) !important;
+  background: var(--gray-100) !important;
+  border-right: 3px solid var(--blue-600) !important;
 }
 
 .navLink:hover {
-  background: var(--gray-50);
-  border-right: 3px solid var(--blue-600);
+  background: var(--gray-50) !important;
+  border-right: 3px solid var(--blue-600) !important;
 }
 
 .navLink:active {
-  transform: scale(0.97);
+  transform: scale(0.97) !important;
 }
 
 /* ---------- TOPBAR ---------- */
@@ -106,10 +122,12 @@
 }
 
 .user {
-  color: var(--blue-600);
+  color: var(--blue-600) !important;
   font-weight: 500;
   white-space: nowrap;
   /* giữ tên trên 1 dòng */
+
+  font-weight: 600 !important;
 }
 
 /* ---------- PAGE ---------- */
@@ -266,6 +284,9 @@
   cursor: pointer;
 
   transition: all 0.15s ease;
+
+  color: #000000 ;
+  font-weight: 600 !important;
 }
 
 .danger {
@@ -378,6 +399,9 @@
   font-size: 14px !important;
   font-family: inherit !important;
   border-right: 3px solid var(--blue-600) !important;
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 
@@ -457,6 +481,9 @@ button:disabled {
   background: var(--white);
   border-radius: 4px;
   cursor: pointer;
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 .pagination button:disabled {
@@ -517,15 +544,24 @@ button:disabled {
   text-align: left;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 .customSelectBtn:hover {
   background: var(--gray-50);
   border-right: 3px solid var(--blue-600);
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 .customSelectBtn:active {
   transform: scale(0.97);
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 /* danh sách option */
@@ -555,9 +591,9 @@ button:disabled {
 .customOption:hover,
 .customOption.activeOption {
   /* giống navActive */
-  background: var(--gray-100);
-  color: var(--blue-600);
-  border-right: 3px solid var(--blue-600);
+  background: var(--gray-100) !important;
+  color: var(--blue-600) !important;
+  border-right: 3px solid var(--blue-600) !important;
 }
 
 /* dropdown trong cell */
@@ -568,6 +604,9 @@ td .customSelectWrapper {
 td .customSelectBtn {
   padding: 4px 8px;
   font-size: 14px;
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 
@@ -710,6 +749,9 @@ td .customSelectBtn {
   box-sizing: border-box;
   /* tránh padding làm méo */
   line-height: 1.4;
+
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 .toolbarBetween {
@@ -775,6 +817,9 @@ td .customSelectBtn {
   border: 1px solid var(--gray-300);
   border-radius: 4px;
   font-size: 14px;
+
+  color: #000000 !important;
+  font-weight: 600 !important; 
 }
 
 /* Modal chi tiết (giữ nguyên như Policy) */
@@ -1039,4 +1084,92 @@ td .customSelectBtn {
 .dateInput:focus {
   outline: none;
   border-color: var(--blue-600) !important;
+}
+
+
+
+
+
+.remindBtn{
+  background:#ff3d71;
+  color:#fff;
+  border:none;
+  padding:6px 14px;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:13px;
+}
+.remindBtn:hover{ opacity:.9; }
+.clickableCard {
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.clickableCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.clickableCard:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+
+
+
+
+
+
+/* ---------- SideBar – nav có icon ---------- */
+.navWrap {
+  flex: 1 !important;                /* chiếm hết không gian còn lại */
+  overflow-y: auto !important;       /* nếu nav dài thì cuộn */
+}
+
+.navLink,
+.navActive {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;              /* khoảng cách icon – text */
+  padding: 12px 24px !important;
+  color: var(--gray-600) !important;
+  text-decoration: none !important;
+}
+
+.navIcon {
+  font-size: 18px !important;        /* kích thước icon */
+  flex-shrink: 0 !important;
+}
+
+/* ---------- Logout ---------- */
+.logoutBox {
+  margin-top: auto !important;       /* đẩy xuống cuối sidebar */
+  margin-bottom: 15px !important; 
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--gray-100) !important;
+}
+
+.logoutBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--gray-600);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background .15s;
+
+  font-weight: 600 !important;
+  font-size: medium;
+}
+
+.logoutBtn:hover {
+  background: var(--gray-50);
+  color: var(--red-500);
+}
+
+.logoutBtn:active {
+  transform: scale(0.97);
 }

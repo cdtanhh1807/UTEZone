@@ -34,7 +34,15 @@
 /* STEP 0 – Upload */
 /* ========================================= */
 .story-upload-step {
+  width: 770px;
+  height: 720px;
+  max-width: 95%;
   text-align: center;
+
+  display: flex;
+  flex-direction: column;     /* xếp nội dung theo cột */
+  justify-content: center;    /* căn giữa theo chiều dọc */
+  align-items: center;        /* căn giữa theo chiều ngang */
 }
 
 .story-upload-box {
@@ -257,6 +265,7 @@
   .story-modal {
     width: 95%;
     padding: 20px;
+    
   }
 
   .story-editor-full {

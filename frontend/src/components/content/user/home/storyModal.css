@@ -224,7 +224,7 @@
   padding: 12px 18px;
   border-radius: 50%;
   cursor: pointer;
-  color: #fff;
+  color: #e6dbdb;
   font-size: 20px;
   transition: background 0.3s;
   margin-right: 20px;
@@ -232,5 +232,46 @@
 
 .storyControls button:hover {
   background-color: rgba(255,255,255,0.5);
+}
+
+.s-nav-left, .s-nav-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(14,13,13,0.3);
+  color: white;
+  font-size: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.s-nav-left:hover, .s-nav-right:hover {
+  background: rgba(0,0,0,0.5);
+}
+
+.s-nav-left { left: 10px; }
+.s-nav-right { right: 10px; margin-right: 20px;}
+
+.s-nav-left,
+.s-nav-right {
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+
+/* THUMBNAILS */
+.thumbnail-bar {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  width: 100%;
 }
 

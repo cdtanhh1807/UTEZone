@@ -6,9 +6,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-left: 90px;
+  margin-left: 50px;
   max-width: 900px;
-  min-width: 900px;
 }
 
 .storyBlock {
@@ -54,14 +53,25 @@
 }
 
 .postSection {
-  width: 90%;
-  margin-top: 40px;
+  width: 100%;
   max-width: 800px;
-  margin-right: 150px;
+  margin: 40px auto 0 auto; /* top auto left-right */
+  background-color: rgb(250 250, 250);
+  box-sizing: border-box;
+  margin-right: 270px;
 }
+
 .post {
   width: 100%;
   margin-top: 30px;
+  background-color: white;
+  border-radius: 20px;
+  padding: 15px;
+  box-sizing: border-box;
+  border: 1px solid rgb(238, 231, 231);
+}
+.comment-time{
+  margin-left: 10px;
 }
 .sharedPost{
   border: 1px solid rgb(224, 221, 221);
@@ -83,16 +93,9 @@
   width: 0%;
 }
 .postInfoName {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap; /* vẫn trên 1 dòng */
-}
-
-.timingInfo {
-  color: #999999;
-  font-size: 14px;
-  flex-shrink: 0; /* giữ nguyên kích thước */
-  margin-left: 10px; /* khoảng cách với tên */
 }
 
 /* Nút optionPost luôn bên phải */
@@ -116,9 +119,10 @@
 }
 .timingInfo {
   color: #999999;
-  font-size: 14px;
+  font-size: 12px;
   width: fit-content;
   white-space: nowrap;
+  margin-left: 10px;
 }
 
 .postImg {
@@ -128,7 +132,19 @@
   overflow: hidden;
   border-radius: 23px;
   background: #000;
+  cursor: pointer;
 }
+.highlight-comment {
+  background-color: #fff8e1;
+  border-radius: 6px;
+  animation: flash 1.5s ease;
+}
+
+@keyframes flash {
+  0% { background-color: #fff8e1; }
+  100% { background-color: transparent; }
+}
+
 
 /* Slider wrapper */
 .postSlider {
@@ -196,6 +212,7 @@
 }
 .leftIcon {
   display: flex;
+  color: black;
 }
 
 /* --- Like Section (đã sửa) --- */
@@ -251,14 +268,16 @@
   margin: 0px 0px;
   text-align: left; 
   align-self: flex-start;
+  color: black;
+
 }
 .postContent p{
   margin: 5px 0px;
 }
 .postTitle{
   width: 100%;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   margin-top: 10px;
   text-align: left; 
   align-self: flex-start;
@@ -517,7 +536,13 @@
   font-size: 14px;
   outline: none;
   border: none;
+  color: black;
 }
+.react-btn svg {
+  font-size: 23px;
+  stroke-width: 1;       /* 👈 mỏng viền */
+}
+
 .react-btn:focus,
 .react-btn:active {
   outline: none;
@@ -677,7 +702,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 580px;
+  margin-left: 550px;
 
 }
 

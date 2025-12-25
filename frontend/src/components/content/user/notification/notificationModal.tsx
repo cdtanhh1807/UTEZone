@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { announceAPI } from "../../../../services/AnnounceService";
 import AccountService from "../../../../services/AccountService";
+import { postAPI } from "../../../../services/PostService";
 import "./notificationModal.css";
 import { jwtDecode } from "jwt-decode";
 import AppealModal from "../appeal/appealModal";
+import ComplaintModal from "./complaintModal";
+import logoht from "../../../../assets/logo_he_thong.jpg";
 
 interface Announce {
   _id: string;
-  receiverEmail: string;
   senderEmail: string;
   type: string;
   contentAnnounce: string;
-  isRead: boolean;
   createdAt: string;
-  contentId?: string;
-  contentParentId?: string;
-  content?: string;
-  policyName?: string | null;
+  contentId?: string; // commentId
+  contentParentId?: string; // postId
 }
 
 interface SenderInfo {
@@ -27,89 +26,136 @@ interface SenderInfo {
 interface NotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPostDetail: (post: any, commentId?: string | null) => void;
 }
 
-const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, onClose }) => {
+const NotificationModal: React.FC<NotificationModalProps> = ({
+  isOpen,
+  onClose,
+  onOpenPostDetail,
+}) => {
   const [notifications, setNotifications] = useState<Announce[]>([]);
-  const [senderInfoMap, setSenderInfoMap] = useState<Record<string, SenderInfo>>({});
+  const [senderInfoMap, setSenderInfoMap] = useState<
+    Record<string, SenderInfo>
+  >({});
   const [loading, setLoading] = useState(false);
 
-  // --- STATE MỚI ---
+  // =========================
+  // APPEAL MODAL
+  // =========================
   const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Announce | null>(null);
 
+  // =========================
+  // COMPLAINT MODAL
+  // =========================
+  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
+  const [complaintContent, setComplaintContent] = useState<string | null>(null);
+
+  // =========================
+  // SYSTEM MODAL
+  // =========================
+  const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
+  const [systemContent, setSystemContent] = useState("");
+
+  // =========================
+  // CURRENT USER EMAIL
+  // =========================
   const token = localStorage.getItem("token");
   let currentUserEmail: string | null = null;
 
-  if (!currentUserEmail && token) {
+  if (token) {
     try {
-      interface JwtPayload {
-        sub: string;
-        exp: number;
-      }
-      const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
+      const decoded = jwtDecode<{ sub: string }>(token);
       currentUserEmail = decoded.sub;
-    } catch (err) {
-      console.error("❌ Token không hợp lệ:", err);
-    }
+    } catch {}
   }
 
+  // =========================
+  // FETCH NOTIFICATIONS
+  // =========================
   useEffect(() => {
     if (!isOpen) return;
 
     setLoading(true);
-    announceAPI
-      .getAllAnnounce()
-      .then(async (res) => {
-        let dataArray: Announce[] = Array.isArray(res.announce_list)
-          ? res.announce_list
-          : [];
 
-        if (currentUserEmail) {
-          dataArray = dataArray.filter((item) => item.senderEmail !== currentUserEmail);
-        }
+    announceAPI.getAllAnnounce().then(async (res) => {
+      const list: Announce[] = (res.announce_list || []).filter(
+        (item: Announce) => item.senderEmail !== currentUserEmail
+      );
 
-        setNotifications(dataArray.reverse());
+      setNotifications(list.reverse());
 
-        const senderEmails = Array.from(new Set(dataArray.map((item) => item.senderEmail)));
-        const infoMap: Record<string, SenderInfo> = {};
+      const senderEmails = Array.from(
+        new Set<string>(list.map((item) => item.senderEmail))
+      );
 
-        await Promise.all(
-          senderEmails.map(async (email) => {
-            try {
-              const resAcc = await AccountService.get_account_info(email);
-              infoMap[email] = {
-                fullName: resAcc.fullName,
-                avatar: resAcc.avatar,
-              };
-            } catch {
-              infoMap[email] = { fullName: email, avatar: "" };
-            }
-          })
-        );
+      const infoMap: Record<string, SenderInfo> = {};
 
-        setSenderInfoMap(infoMap);
-      })
-      .finally(() => setLoading(false));
+      await Promise.all(
+        senderEmails.map(async (email: string) => {
+          try {
+            const acc = await AccountService.get_account_info(email);
+            infoMap[email] = {
+              fullName: acc.fullName,
+              avatar: acc.avatar,
+            };
+          } catch {
+            infoMap[email] = { fullName: email, avatar: "" };
+          }
+        })
+      );
+
+      setSenderInfoMap(infoMap);
+      setLoading(false);
+    });
   }, [isOpen, currentUserEmail]);
 
   if (!isOpen) return null;
 
-  const handleNotificationClick = (item: Announce) => {
+  // =========================
+  // CLICK NOTIFICATION
+  // =========================
+  const handleNotificationClick = async (item: Announce) => {
+    // Complaint
+    if (item.type === "complaint") {
+      setComplaintContent(item.contentAnnounce);
+      setIsComplaintModalOpen(true);
+      return;
+    }
+
+    // Report
     if (item.type === "report") {
       setSelectedReport(item);
       setIsAppealModalOpen(true);
       return;
     }
 
-    if (item.type === "post") {
-      console.log("🔵 Mở bài viết theo contentId:", item.contentId);
+    // Account/system notification
+    if (item.type === "account") {
+      setSystemContent(item.contentAnnounce);
+      setIsSystemModalOpen(true);
       return;
     }
 
-    if (item.type === "comment") {
-      console.log("🟢 Mở bình luận theo contentParentId:", item.contentParentId);
-      return;
+    try {
+      // Post
+      if (item.type === "post" && item.contentId) {
+        const res = await postAPI.getById(item.contentId);
+        onClose();
+        onOpenPostDetail(res.post || res, null);
+        return;
+      }
+
+      // Comment
+      if (item.type === "comment" && item.contentParentId) {
+        const res = await postAPI.getById(item.contentParentId);
+        onClose();
+        onOpenPostDetail(res.post || res, item.contentId);
+        return;
+      }
+    } catch (err) {
+      console.error("❌ Không mở được PostDetail:", err);
     }
   };
 
@@ -119,45 +165,74 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, onClose }
         <div className="notificationModal" onClick={(e) => e.stopPropagation()}>
           <h3>Thông báo</h3>
 
-          <div className="notificationList">
-            {loading && <p>Đang tải...</p>}
-            {!loading && notifications.length === 0 && <p>Chưa có thông báo</p>}
+          {loading && <p>Đang tải...</p>}
 
-            {!loading &&
-              notifications.map((item) => {
-                const sender = senderInfoMap[item.senderEmail];
+          {!loading &&
+            notifications.map((item) => {
+              const sender = senderInfoMap[item.senderEmail];
 
-                return (
-                  <div
-                    className="notificationItem"
-                    key={item._id}
-                    onClick={() => handleNotificationClick(item)}
-                  >
-                    {sender?.avatar && (
-                      <img src={sender.avatar} alt={sender.fullName} className="notificationAvatar" />
-                    )}
+              return (
+                <div
+                  key={item._id}
+                  className="notificationItem"
+                  onClick={() => handleNotificationClick(item)}
+                >
+                  {sender?.avatar && (
+                    <img
+                      src={sender.avatar}
+                      alt={sender.fullName}
+                      className="notificationAvatar"
+                    />
+                  )}
+                  {!sender?.avatar && (
+                    <img
+                      src={logoht}
+                      className="notificationAvatar"
+                    />
+                  )}
 
-                    <div className="notificationContent">
-                      <p>{item.contentAnnounce}</p>
-                      <span>{new Date(item.createdAt).toLocaleString()}</span>
-                    </div>
+                  <div className="notificationContent">
+                    <p>{item.contentAnnounce}</p>
+                    <span>{new Date(item.createdAt).toLocaleString()}</span>
                   </div>
-                );
-              })}
-          </div>
+                </div>
+              );
+            })}
         </div>
       </div>
 
-      {/* --- APPEAL MODAL --- */}
+      {/* Complaint Modal */}
+      <ComplaintModal
+        isOpen={isComplaintModalOpen}
+        content={complaintContent}
+        onClose={() => setIsComplaintModalOpen(false)}
+      />
+
+      {/* Appeal Modal */}
       <AppealModal
         isOpen={isAppealModalOpen}
         reportData={selectedReport}
         onClose={() => setIsAppealModalOpen(false)}
-        onSubmit={(appealText) => {
-          console.log("📨 gửi khiếu nại:", appealText, selectedReport);
-          alert("Đã gửi khiếu nại!");
-        }}
       />
+
+      {/* System Modal */}
+      {isSystemModalOpen && (
+        <div
+          className="systemModalBackdrop"
+          onClick={() => setIsSystemModalOpen(false)}
+        >
+          <div
+            className="systemModalContent"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="systemModalTitle">Hệ thống thông báo</h2>
+            <p className="systemModalBody">{systemContent}</p>
+            <div className="systemModalFooter">
+              <button onClick={() => setIsSystemModalOpen(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

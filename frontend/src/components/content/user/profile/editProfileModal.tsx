@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import AccountService from "../../../../services/AccountService";
 import FileService from "../../../../services/FileService";
 import type { UserInfo } from "../../../../types/Account";
-import Toast from "../../../../toast";
+import { ToastService } from "../../../../services/ToastService";
 
 interface ModalProps {
   user: UserInfo;
@@ -38,7 +38,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
       setPreview(res.url);
     } catch (err) {
       console.error(err);
-      alert("Upload ảnh thất bại!");
+      ToastService.error("Tải ảnh đại diện thất bại!");
     }
   };
 
@@ -55,7 +55,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
       if (department !== (user.department || "")) updateData.department = department;
 
       if (Object.keys(updateData).length === 0) {
-        alert("Không có thay đổi để lưu!");
+        ToastService.info("Không có thay đổi nào để cập nhật.");
         return;
       }
 
@@ -72,11 +72,11 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
   return (
     <div className="modal-backdrop">
       <div className="modal-container">
-        <h2>Edit Profile</h2>
+        <h2>Thông Tin Cá Nhân</h2>
 
         {/* Avatar */}
         <div className="field">
-          <label className="edit-title">Avatar</label>
+          <label className="edit-title">Ảnh đại diện</label>
           <div className="edit-postInfo">
             <img className="edit-postInfoImg" src={preview} alt="avatar" />
             <button className="btn-change-avatar" onClick={handleClickUpload}>
@@ -94,7 +94,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
 
         {/* FULL NAME */}
         <div className="field">
-          <label className="edit-title">Full Name</label>
+          <label className="edit-title">Tên</label>
           <input
             type="text"
             value={fullName}
@@ -105,7 +105,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
 
         {/* PHONE */}
         <div className="field">
-          <label className="edit-title">Phone</label>
+          <label className="edit-title">Số điện thoại</label>
           <input
             type="text"
             value={phone}
@@ -116,7 +116,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
 
         {/* ADDRESS */}
         <div className="field">
-          <label className="edit-title">Address</label>
+          <label className="edit-title">Địa chỉ</label>
           <input
             type="text"
             value={address}
@@ -127,7 +127,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
 
         {/* DATE OF BIRTH */}
         <div className="field">
-          <label className="edit-title">Day of Birth</label>
+          <label className="edit-title">Ngày sinh</label>
           <input
             type="date"
             value={dayOfBirth}
@@ -138,7 +138,7 @@ const EditProfileModal = ({ user, onClose }: ModalProps) => {
         {/* DEPARTMENT */}
         {/* DEPARTMENT */}
         <div className="field">
-          <label className="edit-title">Department</label>
+          <label className="edit-title">Thuộc Phòng/Khoa</label>
           <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}

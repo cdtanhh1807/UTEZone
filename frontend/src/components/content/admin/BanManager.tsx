@@ -42,7 +42,11 @@ const BanManager: React.FC = () => {
 
   /* ------------- fetch real data ------------- */
   useEffect(() => {
-    fetch('http://localhost:8000/ban/get_all_ban')
+    fetch('http://localhost:8000/ban/get_all_ban', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
       .then(async (r) => {
         const text = await r.text(); // đọc raw trước
         console.log('Raw response:', text);

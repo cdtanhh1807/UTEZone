@@ -1,11 +1,14 @@
 /* ComplaintManager.tsx */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import styles from './AdminDashboard.module.css';
-import DatePicker from 'react-datepicker';
-import { vi } from 'date-fns/locale';
-import 'react-datepicker/dist/react-datepicker.css';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import styles from "./AdminDashboard.module.css";
+import DatePicker from "react-datepicker";
+import { vi } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
+import { useNavigate } from "react-router-dom";
+import { postAPI } from "../../../services/PostService";
+import PostDetail from "../user/post/postDetail";
 
 /* ---------- types ---------- */
 type ComplaintItem = {
@@ -15,7 +18,7 @@ type ComplaintItem = {
   action: string;
   complainantEmail: string;
   complainantName: string;
-  typeContent: 'account' | 'post' | 'comment' | 'message';
+  typeContent: "account" | "post" | "comment" | "message";
   contentId: string | null;
   contentParentId: string | null;
   content: string | null;
@@ -37,12 +40,16 @@ const ComplaintManager: React.FC = () => {
   const [page, setPage] = useState(1);
 
   /* ---------- filter ---------- */
-  const [keyword, setKeyword] = useState('');
-  const [selectedDate, setSelectedDate] = useState<string>(''); // YYYY-MM-DD
+  const [keyword, setKeyword] = useState("");
+  const [selectedDate, setSelectedDate] = useState<string>(""); // YYYY-MM-DD
 
   /* ---------- modal ---------- */
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<ComplaintItem | null>(null);
+  const navigate = useNavigate();
+  const [activePost, setActivePost] = useState<any>(null);
+  const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
+  const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
 
   const isFocusRef = useRef(false);
   const [suggest, setSuggest] = useState<string[]>([]);
@@ -57,11 +64,18 @@ const ComplaintManager: React.FC = () => {
   /* ---------- fetch data ---------- */
   const fetchComplaints = async () => {
     try {
-      const res = await fetch('http://localhost:8000/complaint/get_all_complaint');
+      const res = await fetch(
+        "http://localhost:8000/complaint/get_all_complaint",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       const data: ComplaintItem[] = await res.json();
       setComplaints(data);
     } catch (e) {
-      console.error('Lỗi lấy danh sách khiếu nại:', e);
+      console.error("Lỗi lấy danh sách khiếu nại:", e);
       showToast("Không thể tải danh sách: " + e, false);
     }
   };
@@ -111,7 +125,10 @@ const ComplaintManager: React.FC = () => {
     if (isFocusRef.current) setShowSuggest(filteredEmails.length > 0);
   }, [keyword, filtered]);
 
-  const totalPages = useMemo(() => Math.ceil(filtered.length / LIMIT_PER_PAGE), [filtered]);
+  const totalPages = useMemo(
+    () => Math.ceil(filtered.length / LIMIT_PER_PAGE),
+    [filtered]
+  );
   const pagedList = useMemo(() => {
     const start = (page - 1) * LIMIT_PER_PAGE;
     return filtered.slice(start, start + LIMIT_PER_PAGE);
@@ -120,12 +137,12 @@ const ComplaintManager: React.FC = () => {
   /* ---------- modal ---------- */
   const openDetailModal = (c: ComplaintItem) => {
     setEditing(c);
-    document.body.classList.add('modal-open');
+    document.body.classList.add("modal-open");
     setIsOpen(true);
   };
   const closeModal = () => {
     setIsOpen(false);
-    document.body.classList.remove('modal-open');
+    document.body.classList.remove("modal-open");
     setEditing(null);
   };
 
@@ -133,15 +150,21 @@ const ComplaintManager: React.FC = () => {
   const handleReject = async () => {
     if (!editing) return;
     try {
-      const res = await fetch(`http://localhost:8000/complaint/reject_complaint/${editing._id}`, {
-        method: 'PUT',
-      });
+      const res = await fetch(
+        `http://localhost:8000/complaint/reject_complaint/${editing._id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error();
-      showToast('Bác bỏ thành công!', true);
+      showToast("Bác bỏ thành công!", true);
       await fetchComplaints();
       setPage(1);
     } catch (e: any) {
-      showToast('Bác bỏ thất bại: ' + e.message, false);
+      showToast("Bác bỏ thất bại: " + e.message, false);
     }
     closeModal();
   };
@@ -149,17 +172,61 @@ const ComplaintManager: React.FC = () => {
   const handleApprove = async () => {
     if (!editing) return;
     try {
-      const res = await fetch(`http://localhost:8000/complaint/approve_complaint/${editing._id}`, {
-        method: 'PUT',
-      });
+      const res = await fetch(
+        `http://localhost:8000/complaint/approve_complaint/${editing._id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error();
-      showToast('Phê duyệt thành công!', true);
+      showToast("Phê duyệt thành công!", true);
       await fetchComplaints();
       setPage(1);
     } catch (e: any) {
-      showToast('Phê duyệt thất bại: ' + e.message, false);
+      showToast("Phê duyệt thất bại: " + e.message, false);
     }
     closeModal();
+  };
+  const openPostDetailFromComplaint = async (c: ComplaintItem) => {
+    try {
+      console.log("Mở PostDetail từ Complaint:", c);
+
+      // 1. đóng modal
+      closeModal();
+
+      // 2. xác định postId CHUẨN
+      const postId = c.contentId;
+
+      if (!postId) {
+        console.warn("Không tìm thấy postId");
+        return;
+      }
+
+      const res = await postAPI.getById(postId);
+      const post = res?.post || res;
+
+      console.log("Post lấy được:", post);
+
+      if (!post) {
+        console.warn("Không lấy được bài viết");
+        return;
+      }
+
+      setActivePost(post);
+
+      console.log("Active post set kkkkkkk:", activePost);
+
+      // 5. focus comment nếu cần
+      setFocusCommentId(c.typeContent === "comment" ? c.contentId : null);
+
+      // 6. mở PostDetail
+      setIsPostDetailOpen(true);
+    } catch (err) {
+      console.error("Không mở được PostDetail từ Complaint:", err);
+    }
   };
 
   /* ---------- render ---------- */
@@ -170,7 +237,7 @@ const ComplaintManager: React.FC = () => {
         <div className={`${styles.toolbar} ${styles.toolbarBetween}`}>
           <div className={styles.filterLeft}>
             {/* Search */}
-            <div style={{ position: 'relative', display: 'inline-block' }}>
+            <div style={{ position: "relative", display: "inline-block" }}>
               <input
                 className={styles.search}
                 placeholder="Tìm theo email người khiếu nại"
@@ -210,7 +277,7 @@ const ComplaintManager: React.FC = () => {
             <DatePicker
               selected={selectedDate ? new Date(selectedDate) : null}
               onChange={(date: Date | null) =>
-                setSelectedDate(date ? date.toISOString().slice(0, 10) : '')
+                setSelectedDate(date ? date.toISOString().slice(0, 10) : "")
               }
               dateFormat="dd/MM/yyyy"
               placeholderText="Ngày khiếu nại"
@@ -240,7 +307,7 @@ const ComplaintManager: React.FC = () => {
                   <td>{c.policyName}</td>
                   <td>{c.action}</td>
                   <td>{c.description}</td>
-                  <td>{new Date(c.complaintAt).toLocaleString('vi-VN')}</td>
+                  <td>{new Date(c.complaintAt).toLocaleString("vi-VN")}</td>
                   <td>
                     <button
                       className={styles.textBtn}
@@ -264,7 +331,10 @@ const ComplaintManager: React.FC = () => {
             <span>
               {page} / {totalPages}
             </span>
-            <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               Sau
             </button>
           </div>
@@ -293,34 +363,58 @@ const ComplaintManager: React.FC = () => {
                   {/* ---------- Người khiếu nại ---------- */}
                   <div className={styles.formRow}>
                     <div className={styles.formCol}>
-                      <label className={styles.label}>Email người khiếu nại</label>
-                      <input className={styles.input} value={editing?.complainantEmail || ''} disabled />
+                      <label className={styles.label}>
+                        Email người khiếu nại
+                      </label>
+                      <input
+                        className={styles.input}
+                        value={editing?.complainantEmail || ""}
+                        disabled
+                      />
                     </div>
                     <div className={styles.formCol}>
-                      <label className={styles.label}>Tên người khiếu nại</label>
-                      <input className={styles.input} value={editing?.complainantName || ''} disabled />
+                      <label className={styles.label}>
+                        Tên người khiếu nại
+                      </label>
+                      <input
+                        className={styles.input}
+                        value={editing?.complainantName || ""}
+                        disabled
+                      />
                     </div>
                   </div>
 
                   {/* ---------- ID nội dung (nếu có) ---------- */}
-                  {editing?.typeContent === 'post' && (
+                  {editing?.typeContent === "post" && (
                     <div className={styles.formRow}>
                       <div className={styles.formCol}>
                         <label className={styles.label}>ID bài viết</label>
-                        <input className={styles.input} value={editing.contentId || ''} disabled />
+                        <input
+                          className={styles.input}
+                          value={editing.contentId || ""}
+                          disabled
+                        />
                       </div>
                     </div>
                   )}
 
-                  {editing?.typeContent === 'comment' && (
+                  {editing?.typeContent === "comment" && (
                     <div className={styles.formRow}>
                       <div className={styles.formCol}>
                         <label className={styles.label}>ID bình luận</label>
-                        <input className={styles.input} value={editing.contentId || ''} disabled />
+                        <input
+                          className={styles.input}
+                          value={editing.contentId || ""}
+                          disabled
+                        />
                       </div>
                       <div className={styles.formCol}>
                         <label className={styles.label}>Thuộc bài viết</label>
-                        <input className={styles.input} value={editing.contentParentId || ''} disabled />
+                        <input
+                          className={styles.input}
+                          value={editing.contentParentId || ""}
+                          disabled
+                        />
                       </div>
                     </div>
                   )}
@@ -332,20 +426,24 @@ const ComplaintManager: React.FC = () => {
                       <input
                         className={styles.input}
                         value={
-                          editing?.typeContent === 'account'
-                            ? 'Tài khoản'
-                            : editing?.typeContent === 'post'
-                              ? 'Bài viết'
-                              : editing?.typeContent === 'comment'
-                                ? 'Bình luận'
-                                : 'Tin nhắn'
+                          editing?.typeContent === "account"
+                            ? "Tài khoản"
+                            : editing?.typeContent === "post"
+                            ? "Bài viết"
+                            : editing?.typeContent === "comment"
+                            ? "Bình luận"
+                            : "Tin nhắn"
                         }
                         disabled
                       />
                     </div>
                     <div className={styles.formCol}>
                       <label className={styles.label}>Chính sách vi phạm</label>
-                      <input className={styles.input} value={editing?.policyName || ''} disabled />
+                      <input
+                        className={styles.input}
+                        value={editing?.policyName || ""}
+                        disabled
+                      />
                     </div>
                   </div>
 
@@ -353,21 +451,88 @@ const ComplaintManager: React.FC = () => {
                   <div className={styles.formRow}>
                     <div className={styles.formCol}>
                       <label className={styles.label}>Nội dung khiếu nại</label>
-                      <textarea className={styles.textarea} value={editing?.description || ''} disabled rows={3} />
+                      <textarea
+                        className={styles.textarea}
+                        value={editing?.description || ""}
+                        disabled
+                        rows={3}
+                      />
                     </div>
                   </div>
+
+                  {editing?.typeContent &&
+                    editing.typeContent !== "message" && (
+                      <div className={styles.formRow}>
+                        <div className={styles.formCol}>
+                          {editing.contentParentId != null ? (
+                            // 👉 CÓ contentParentId → hiển thị nội dung dạng textarea (giống mô tả khiếu nại)
+                            <>
+                              <label className={styles.label}>
+                                Nội dung bình luận bị gỡ
+                              </label>
+                              <textarea
+                                className={styles.textarea}
+                                value={
+                                  editing.content ||
+                                  "Không có nội dung hiển thị"
+                                }
+                                disabled
+                                rows={3}
+                              />
+                            </>
+                          ) : (
+                            // 👉 KHÔNG CÓ contentParentId → giữ nguyên nút điều hướng
+                            <button
+                              className={styles.textBtn}
+                              onClick={() => {
+                                if (!editing) return;
+
+                                if (editing.contentId === null) {
+                                  navigate(
+                                    `/profile/${editing.complainantEmail}`
+                                  );
+                                  closeModal();
+                                }
+
+                                if (editing.contentParentId === null) {
+                                  openPostDetailFromComplaint(editing);
+                                }
+                              }}
+                            >
+                              {editing.contentId === null
+                                ? "Xem tài khoản"
+                                : "Xem bài viết"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   {/* ---------- Người duyệt & thời gian duyệt ---------- */}
                   <div className={styles.formRow}>
                     <div className={styles.formCol}>
-                      <label className={styles.label}>Người phê duyệt vi phạm</label>
-                      <input className={styles.input} value={editing?.approveBy || ''} disabled />
-                    </div>
-                    <div className={styles.formCol}>
-                      <label className={styles.label}>Thời gian phê duyệt</label>
+                      <label className={styles.label}>
+                        Người phê duyệt vi phạm
+                      </label>
                       <input
                         className={styles.input}
-                        value={editing ? new Date(editing.approveAt).toLocaleString('vi-VN') : ''}
+                        value={editing?.approveBy || ""}
+                        disabled
+                      />
+                    </div>
+                    <div className={styles.formCol}>
+                      <label className={styles.label}>
+                        Thời gian phê duyệt
+                      </label>
+                      <input
+                        className={styles.input}
+                        value={
+                          editing
+                            ? new Date(editing.approveAt).toLocaleString(
+                                "vi-VN"
+                              )
+                            : ""
+                        }
                         disabled
                       />
                     </div>
@@ -375,7 +540,8 @@ const ComplaintManager: React.FC = () => {
 
                   {/* ---------- Lịch sử vi phạm ---------- */}
                   <label className={styles.label}>
-                    Lịch sử vi phạm chính sách "{editing?.policyName}" của "{editing?.complainantEmail}"
+                    Lịch sử vi phạm chính sách "{editing?.policyName}" của "
+                    {editing?.complainantEmail}"
                   </label>
                   <div className={styles.tableWrapper} style={{ marginTop: 8 }}>
                     <table className={styles.table}>
@@ -390,12 +556,14 @@ const ComplaintManager: React.FC = () => {
                           editing?.violation?.map((t, i) => (
                             <tr key={i}>
                               <td>{i + 1}</td>
-                              <td>{new Date(t).toLocaleString('vi-VN')}</td>
+                              <td>{new Date(t).toLocaleString("vi-VN")}</td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td><b>0</b></td>
+                            <td>
+                              <b>0</b>
+                            </td>
                             <td>Không có lịch sử vi phạm</td>
                           </tr>
                         )}
@@ -405,10 +573,16 @@ const ComplaintManager: React.FC = () => {
                 </div>
 
                 <div className={styles.modalFooter}>
-                  <button className={`${styles.textBtn} ${styles.confirm}`} onClick={handleReject}>
+                  <button
+                    className={`${styles.textBtn} ${styles.confirm}`}
+                    onClick={handleReject}
+                  >
                     Bác bỏ
                   </button>
-                  <button className={`${styles.textBtn} ${styles.danger}`} onClick={handleApprove}>
+                  <button
+                    className={`${styles.textBtn} ${styles.danger}`}
+                    onClick={handleApprove}
+                  >
                     Phê duyệt
                   </button>
                   <button className={styles.textBtn} onClick={closeModal}>
@@ -422,9 +596,40 @@ const ComplaintManager: React.FC = () => {
       </Transition>
 
       {toast && (
-        <div className={`${styles.toast} ${toast.ok ? styles.toastOk : styles.toastErr}`}>
+        <div
+          className={`${styles.toast} ${
+            toast.ok ? styles.toastOk : styles.toastErr
+          }`}
+        >
           {toast.msg}
         </div>
+      )}
+      {isPostDetailOpen && activePost && (
+        <PostDetail
+          activePost={activePost}
+          focusCommentId={focusCommentId}
+          onClose={() => setIsPostDetailOpen(false)}
+          onCommentAdded={async () => {
+            await fetchComplaints();
+          }}
+          onOpenOriginalPost={async (originalPostId: string) => {
+            try {
+              const res = await fetch(
+                `http://localhost:8000/post/${originalPostId}`
+              );
+              const originalPost = await res.json();
+
+              // đóng rồi mở lại để reset PostDetail
+              setIsPostDetailOpen(false);
+              requestAnimationFrame(() => {
+                setActivePost(originalPost);
+                setIsPostDetailOpen(true);
+              });
+            } catch (err) {
+              console.error("Không lấy được bài viết gốc", err);
+            }
+          }}
+        />
       )}
     </>
   );

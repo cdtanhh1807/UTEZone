@@ -149,7 +149,7 @@ class ComplaintServiceImpl(IComplaintService):
                         contentAnnounce: str = "Đơn khiếu nại về bình luận: " + complaint.content + "... của bạn đã được phê duyệt"
                         announce = Announce(senderEmail="Hệ thống", receiverEmail=complaint.complainantEmail, type="complaint", contentAnnounce=contentAnnounce,
                                             isRead=False, createdAt=datetime.now(), contentId=complaint.contentId,
-                                            contentParentId=complaint.contentParentId, content=complaint.content, policyName=polic.name,
+                                            contentParentId=complaint.contentParentId, content=complaint.content, policyName=polic.name, policyId=str(polic.id),
                                             approveBy=req.actionBy, approveAt=datetime.now())
                         dic_announce_insert = await AnnounceRepository.insert(announce.model_dump())
                         #announce
@@ -164,7 +164,7 @@ class ComplaintServiceImpl(IComplaintService):
                             contentAnnounce = "Đơn khiếu nại bài viết: " + post.post.title + "... của bạn đã được phê duyệt"
                         else: contentAnnounce = "Đơn khiếu nại bài viết của bạn đã được phê duyệt"
                         announce = Announce(senderEmail="Hệ thống", receiverEmail=complaint.complainantEmail, type="complaint", contentAnnounce=contentAnnounce,
-                                            isRead=False, createdAt=datetime.now(), contentId=complaint.contentId, policyName=polic.name)
+                                            isRead=False, createdAt=datetime.now(), contentId=complaint.contentId, policyName=polic.name, policyId=str(polic.id))
                         dic_announce_insert = await AnnounceRepository.insert(announce.model_dump())
                         #announce
                 return ActionComplaintResponse(success=True, message="Ok")

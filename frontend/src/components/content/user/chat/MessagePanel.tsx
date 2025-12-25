@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 import useChat from "./useChat";
 import { useAuth } from "./AuthContext";
-import accountAPI from "../../../../services/AccountService"; 
+import accountAPI from "../../../../services/AccountService";
 import "./MessagePanel.css";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 
@@ -29,7 +29,6 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
 
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // ⭐ Scroll ngay lập tức xuống cuối khi messages thay đổi (không lướt)
   useLayoutEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -42,7 +41,7 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
         const data = await accountAPI.get_account_info(otherEmail);
         setUserInfo({
           fullName: data.fullName,
-          avatar: data.avatar
+          avatar: data.avatar,
         });
       } catch (err) {
         console.error("Lỗi lấy thông tin user:", err);
@@ -64,19 +63,20 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
 
   return (
     <div className={`panel ${anim ? "panel-animate" : ""}`}>
-
       {/* Header */}
       <div className="panel-header">
         <img
           className="postInfoImg"
           src={userInfo?.avatar}
           alt="avatar"
+          style={{ cursor: "pointer" }}
           onClick={() => goToProfile(otherEmail)}
         />
 
         <div className="postInfoText">
           <div
             className="postInfoName"
+            style={{ cursor: "pointer" }}
             onClick={() => goToProfile(otherEmail)}
           >
             {userInfo?.fullName || "Đang tải..."}
@@ -86,7 +86,7 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
 
       {/* Body */}
       <div className="panel-body" ref={bodyRef}>
-        {messages.map((m, i) => (
+        {messages.slice(1).map((m, i) => (
           <div
             key={i}
             className={`msg-line ${m.sender_email === me ? "me" : "other"}`}
@@ -106,14 +106,15 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
           rows={1}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();   // Ngăn xuống dòng
+              e.preventDefault(); // Ngăn xuống dòng
               onSend();
             }
           }}
         />
-        <button onClick={onSend}><SendRoundedIcon /></button>
+        <button onClick={onSend}>
+          <SendRoundedIcon />
+        </button>
       </div>
-
     </div>
   );
 };

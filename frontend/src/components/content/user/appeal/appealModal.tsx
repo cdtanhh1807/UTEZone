@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./appealModal.css";
 import { complaintAPI } from "../../../../services/ComplaintService";
+import { ToastService } from "../../../../services/ToastService";
 
 interface AppealModalProps {
   isOpen: boolean;
@@ -12,9 +13,14 @@ interface AppealModalProps {
     contentId?: string | null;
     contentParentId?: string | null;
     policyId?: string | null;
-    typeContent?: string | null;
+    type?: string | null;
+
+    // ✅ THÊM
+    approveBy?: string | null;      // email người duyệt
+    approveAt?: string | Date | null; // thời điểm duyệt
   } | null;
-  onSubmit?: (appealText: string) => void; // optional
+
+  onSubmit?: (appealText: string) => void;
 }
 
 const AppealModal: React.FC<AppealModalProps> = ({
@@ -29,23 +35,26 @@ const AppealModal: React.FC<AppealModalProps> = ({
 
   const handleSend = async () => {
     if (!appealText.trim()) {
-      alert("Vui lòng nhập nội dung khiếu nại!");
+      ToastService.warning("Vui lòng nhập lý do khiếu nại.");
       return;
     }
 
-    const payload = {
-  policyId: reportData.policyId || "",
-  typeContent: reportData.typeContent || "",
-  contentId: reportData.contentId || "",
-  contentParentId: reportData.contentParentId || "",
-  content: reportData.content || "",
-  description: appealText.trim(),
-};
+    console.log("Appeal text:", reportData);
 
+    const payload = {
+      policyId: reportData.policyId || "",
+      typeContent: reportData.type || "",
+      contentId: reportData.contentId || "",
+      contentParentId: reportData.contentParentId || "",
+      content: reportData.content || "",
+      description: appealText.trim(),
+      approveBy: reportData.approveBy || "",
+      approveAt: reportData.approveAt || new Date(),
+    };
 
     try {
       await complaintAPI.addComplaint(payload);
-      alert("Gửi khiếu nại thành công!");
+      ToastService.success("Khiếu nại của bạn đã được gửi thành công.");
 
       onSubmit && onSubmit(appealText); // nếu bạn còn muốn callback cũ
 
@@ -53,7 +62,7 @@ const AppealModal: React.FC<AppealModalProps> = ({
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Gửi khiếu nại thất bại!");
+      ToastService.error("Gửi khiếu nại thất bại, vui lòng thử lại.");
     }
   };
 
@@ -63,19 +72,28 @@ const AppealModal: React.FC<AppealModalProps> = ({
         <h3>Khiếu nại quyết định</h3>
 
         <div className="appealInfo">
-          <p><strong>Nội dung bị gỡ:</strong> {reportData.content}</p>
-          <p><strong>Chính sách vi phạm:</strong> {reportData.policyName}</p>
+          <p>
+            <strong>Nội dung bị gỡ:</strong> {reportData.content}
+          </p>
+          <p>
+            <strong>Chính sách vi phạm:</strong> {reportData.policyName}
+          </p>
         </div>
 
         <textarea
+          className="appealTextarea"
           placeholder="Nhập lý do bạn muốn khiếu nại..."
           value={appealText}
           onChange={(e) => setAppealText(e.target.value)}
         />
 
         <div className="appealActions">
-          <button className="btn-cancel" onClick={onClose}>Hủy</button>
-          <button className="btn-submit" onClick={handleSend}>Gửi khiếu nại</button>
+          <button className="btn-cancel" onClick={onClose}>
+            Hủy
+          </button>
+          <button className="btn-submit" onClick={handleSend}>
+            Gửi khiếu nại
+          </button>
         </div>
       </div>
     </div>

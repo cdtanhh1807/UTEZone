@@ -19,6 +19,7 @@ class BanRepository:
     async def add_or_update_ban(violatorEmail: str, violationId: str) -> dict | None:
         now = datetime.now()
         end_at = now + timedelta(days=1)
+        # end_at = now
 
         doc = await BanRepository.collection.find_one_and_update(
             {
@@ -117,3 +118,23 @@ class BanRepository:
             return result
 
         return None
+    
+    @staticmethod
+    async def remove_expired_violations(email: str):
+        now = datetime.now()
+
+        await BanRepository.collection.update_one(
+            { "violatorEmail": email },
+            {
+                "$pull": {
+                    "violations": {
+                        "endAt": { "$lte": now }
+                    }
+                }
+            }
+        )
+
+        await BanRepository.collection.delete_one({
+            "violatorEmail": email,
+            "violations": { "$size": 0 }
+        })

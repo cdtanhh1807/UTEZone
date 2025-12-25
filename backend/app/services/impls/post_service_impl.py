@@ -2,7 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from dto.post.request.get_my_post_request import GetMyPostRequest
 from dto.post.request.get_post_by_email_request import GetPostByEmailRequest
+from dto.post.request.get_post_suggest_request import GetPostSuggestRequest
 from dto.post.response.get_post_by_email_response import GetPostByEmailResponse
+from dto.post.response.get_post_suggest_response import GetPostSuggestResponse
 from dto.statistic.request.get_post_of_day_request import GetPostOfDayRequest
 from dto.statistic.request.get_top_interacted_post_request import GetTopInteractedPostRequest
 from dto.statistic.response.get_post_of_day_response import GetPostOfDayResponse
@@ -160,7 +162,7 @@ class PostServiceImpl(IPostService):
         return None
     
     async def get_by_email(self, req: GetPostByEmailRequest) -> GetPostByEmailResponse:
-        posts_data = await PostRepository.find_by_email(req.email)
+        posts_data = await PostRepository.find_by_email(req.email, req.ownerEmail)
         posts = [Post(**bson_to_dict(p)) for p in posts_data]
         return GetPostByEmailResponse(post_list=posts)
     
@@ -184,6 +186,17 @@ class PostServiceImpl(IPostService):
             post: TopPost = TopPost(**bson_to_dict(dic))
             data.append(post)
         return GetTopInteractedPostReponse(success=True, data=data)
+    
+    async def get_post_suggest(self, req: GetPostSuggestRequest) -> GetPostSuggestResponse:
+        post_dic = await PostRepository.get_post_suggest(req.email)
+        pl: List[Post] = []
+        if len(post_dic) > 0:
+            for dic in post_dic:
+                post: Post = Post(**bson_to_dict(dic))
+                pl.append(post)
+        rs = GetPostSuggestResponse(list_post=pl)
+        return rs
+
 
 
 

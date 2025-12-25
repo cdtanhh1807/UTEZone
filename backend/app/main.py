@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
         await perm_task
 
 app = FastAPI(
-    title="UTE Forum",
+    title="UTE Zone",
     description="Simple UTE Forum backend using FastAPI + MongoDB",
     version="1.0.0",
     lifespan=lifespan

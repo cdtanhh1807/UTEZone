@@ -5,7 +5,7 @@ import type { FollowBlockRequest } from "../../../../services/AccountService";
 interface FollowButtonProps {
   ownerEmail: string;
   clientEmail: string;
-  onFollowSuccess?: () => void; // ⬅ callback
+  onFollowSuccess?: () => void;
 }
 
 export const FollowButton = ({ ownerEmail, clientEmail, onFollowSuccess }: FollowButtonProps) => {

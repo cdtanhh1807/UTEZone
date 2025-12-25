@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
+from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.google_auth_request import GoogleAuthRequest
 from dto.account.request.register_user_request import RegisterUserRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
+from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.register_user_response import RegisterUserResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from dto.auth.request.otp_request import OTPRequest
@@ -79,4 +81,8 @@ class IAccountService(ABC):
 
     @abstractmethod
     async def get_account_by_email(self, email: str) -> Optional[Account]:
+        pass
+
+    @abstractmethod
+    async def get_relation(self, req: GetRelationRequest) -> Optional[GetRelationResponse]:
         pass

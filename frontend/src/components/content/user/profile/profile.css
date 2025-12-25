@@ -1,4 +1,4 @@
-.Profile {
+.my-profile {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
@@ -14,7 +14,11 @@
   min-height: 300px; 
   max-width: 600px;
 }
-.post {
+.p-post {
   flex: 1;
   overflow-y: auto;
+}
+.header,
+.p-post {
+  margin-left: 280px;
 }

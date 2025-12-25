@@ -25,6 +25,9 @@ class UpdatePostRequest(BaseModel):
     comments: Optional[List[Comment]] = None
     lastEdited: Optional[datetime] = None
 
+
+    thumbnails: Optional[List[str]] = None
+
     class Config:
         validate_by_name = True
         arbitrary_types_allowed = True

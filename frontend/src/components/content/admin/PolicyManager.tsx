@@ -41,7 +41,7 @@ const PolicyManager: React.FC = () => {
   const api = (endpoint: string, body?: any) =>
     fetch(`http://localhost:8000${endpoint}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(body),
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
@@ -52,7 +52,7 @@ const PolicyManager: React.FC = () => {
   const unsetAction = (policyId: string) =>
     fetch(`http://localhost:8000/policy/unset_action/${policyId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({}),
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
@@ -62,7 +62,11 @@ const PolicyManager: React.FC = () => {
 
   /* ---------- fetch policies ---------- */
   useEffect(() => {
-    fetch('http://localhost:8000/policy/get_all_policy')
+    fetch('http://localhost:8000/policy/get_all_policy', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
       .then(async (r) => {
         const text = await r.text(); // đọc raw trước
         console.log('Raw response:', text);
@@ -91,7 +95,11 @@ const PolicyManager: React.FC = () => {
 
   /* ---------- fetch penalty list ---------- */
   useEffect(() => {
-    fetch('http://localhost:8000/policy/get_all_action')
+    fetch('http://localhost:8000/policy/get_all_action', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
       .then((r) => r.json())
       .then((d) => {
         // đúng tên field trong response
@@ -227,13 +235,17 @@ const PolicyManager: React.FC = () => {
     try {
       const res = await fetch('http://localhost:8000/policy/add_policy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(res.statusText);
 
       // 5. reload danh sách thực tế từ server
-      const { policy_list } = await fetch('http://localhost:8000/policy/get_all_policy')
+      const { policy_list } = await fetch('http://localhost:8000/policy/get_all_policy', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
         .then(r => r.text()).then(t => JSON.parse(t));
 
       const mapped: Policy[] = policy_list.map((p: any) => ({

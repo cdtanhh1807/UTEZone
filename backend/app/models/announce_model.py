@@ -17,6 +17,7 @@ class Announce(BaseModel):
     contentParentId: Optional[str] = None
     content: Optional[str] = None
     policyName: Optional[str] = None
+    policyId: Optional[str] = None
 
     approveBy: Optional[str] = None
     approveAt: Optional[datetime] = None

@@ -8,16 +8,26 @@
 /* Modal nằm ngay phía dưới icon chuông */
 .notificationModal {
   position: absolute;
-  top: 60px; /* Tùy vị trí icon chuông, bạn có thể chỉnh */
-  right: 20px; /* căn sát góc phải */
-  
+  top: 60px; 
+  right: 20px; 
   width: 350px;
+  max-height: 500px;
   background: #fff;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.25);
   animation: fadeIn 0.2s ease;
+
+  overflow-y: scroll; /* cho phép scroll theo chiều dọc */
+  scrollbar-width: none; /* Firefox: ẩn scrollbar */
 }
+
+/* Chrome, Edge, Safari */
+.notificationModal::-webkit-scrollbar {
+  width: 0px;
+  background: transparent; /* ẩn scrollbar */
+}
+
 
 /* Danh sách thông báo */
 /* Ẩn thanh cuộn Chrome, Safari, Edge */
@@ -81,3 +91,54 @@
   from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.systemModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.systemModalContent {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+.systemModalTitle {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.systemModalBody {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.systemModalFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.systemModalFooter button {
+  padding: 8px 16px;
+  border: none;
+  background-color: #1976d2;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.systemModalFooter button:hover {
+  background-color: #115293;
+}
+

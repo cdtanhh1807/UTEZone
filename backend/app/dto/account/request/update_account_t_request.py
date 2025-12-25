@@ -9,3 +9,4 @@ class UpdateAccountTRequest(BaseModel):
     day_of_birth: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    department: Optional[str] = None

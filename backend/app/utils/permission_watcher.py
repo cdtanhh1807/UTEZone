@@ -1,8 +1,8 @@
-# background/permission_watcher.py
 import asyncio
 import logging
 from core.redis import redis_client, delete_ban_countdown
 from dto.account.request.update_account_request import UpdateAccountRequest
+from repositories.ban_repository import BanRepository
 from services.impls.account_service_impl import AccountServiceImpl
 from models.account_model import Permission
 
@@ -35,6 +35,7 @@ async def restore_permission(email: str, action: str):
                 )
             )
         )
+        repo = await BanRepository.remove_expired_violations(email)
         logger.info("[PERM] Trả quyền %s cho %s", action, email)
     except Exception as e:
         logger.exception("restore_permission %s %s: %s", email, action, e)
@@ -49,10 +50,10 @@ async def permission_watcher_loop():
             keys = await redis_client.keys(SCAN_PATTERN)
             for key in keys:
                 ttl = await redis_client.ttl(key)
-                logger.info("[PERM] scan key=%s ttl=%s", key, ttl)
+                # logger.info("[PERM] scan key=%s ttl=%s", key, ttl)
                 if ttl <= 0:          # <-- thay điều kiện này
                     _, email, action = key.split(":")
-                    logger.info("[PERM] Detected expired key %s", key)
+                    # logger.info("[PERM] Detected expired key %s", key)
                     await restore_permission(email, action)
                     await delete_ban_countdown(email, action)
         except Exception as e:

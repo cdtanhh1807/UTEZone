@@ -31,7 +31,11 @@ const AccountManager: React.FC = () => {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8000/account/get_all_account")
+    fetch("http://localhost:8000/account/get_all_account", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         const mapped: Account[] = data.account_list.map((acc: any) => ({
@@ -110,12 +114,31 @@ const AccountManager: React.FC = () => {
   };
 
   /* gọi api update */
-  const updateAccountField = async (id: string, field: 'status' | 'role', value: string) => {
+  const updateAccountField = async (
+    id: string,
+    field: 'status' | 'role',
+    value: string
+  ) => {
     try {
+      // Tạo body động
+      const body: any = { [field]: value };
+
+      // Nếu update status thì set thêm pernum
+      if (field === 'status') {
+        if (value === 'locked') {
+          body['permission.pernum'] = '000';
+        } else if (value === 'active') {
+          body['permission.pernum'] = '111';
+        }
+      }
+
       const res = await fetch(`http://localhost:8000/account/update_account/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) throw new Error('Cập nhật thất bại');
@@ -128,9 +151,9 @@ const AccountManager: React.FC = () => {
           acc.id === id
             ? {
               ...acc,
-              [field]: updated.account[field],
-              role: updated.account.role, // đảm bảo role đồng bộ
-              status: updated.account.status, // đảm bảo status đồng bộ
+              role: updated.account.role,
+              status: updated.account.status,
+              permission: updated.account.permission, // đồng bộ pernum
             }
             : acc
         )
@@ -157,8 +180,11 @@ const AccountManager: React.FC = () => {
     try {
       const res = await fetch(`http://localhost:8000/account/update_account/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hidden: true }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ 
+          hidden: true,
+          status: 'locked',
+          'permission.pernum': '000', }),
       });
 
       if (!res.ok) throw new Error('Xóa tài khoản thất bại');

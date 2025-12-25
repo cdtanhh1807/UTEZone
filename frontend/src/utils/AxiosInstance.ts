@@ -23,7 +23,6 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-    //   window.location.href = '/'; // hoặc dùng navigate nếu trong component
     }
     return Promise.reject(error);
   }

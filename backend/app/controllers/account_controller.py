@@ -3,11 +3,13 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Security, status
 from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
+from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.request.update_account_t_request import UpdateAccountTRequest
 from dto.account.response.account_info_response import AccountInfoResponse
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
+from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from dto.account.response.update_account_t_response import UpdateAccountTResponse
 from repositories.account_repository import AccountRepository
@@ -44,7 +46,7 @@ async def login(
     account = await service.authenticate_user(data)
     if not account:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    token = create_access_token({"sub": account.email, "role": account.role})
+    token = create_access_token({"sub": account.email, "role": account.role, "per": account.permission.pernum})
     return LoginResponse(access_token=token) 
 
 @router.post("/register", response_model=OTPResponse)
@@ -112,7 +114,7 @@ async def google_login(
     account = await service.login_with_google(google_req)
     if not account:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    token = create_access_token({"sub": account.email, "role": account.role})
+    token = create_access_token({"sub": account.email, "role": account.role, "per": account.permission.pernum})
     return LoginResponse(access_token=token) 
 
 @router.get("/get_all_account", response_model=GetAllAccountResponse)
@@ -215,3 +217,16 @@ async def get_account_info(
         user_info["avatar"] = avatar_url
     
     return AccountInfoResponse(**user_info)
+
+@router.get("/account_relation/{email}", response_model=GetRelationResponse)
+async def get_account_relation(
+    email: str,
+    # current_user: dict = Depends(get_current_user),
+    service: IAccountService = Depends(get_account_service)
+):
+    req = GetRelationRequest(email=email)
+    relation = await service.get_relation(req)    
+    if not relation:
+        raise HTTPException(status_code=404, detail="Not found")
+    return relation
+

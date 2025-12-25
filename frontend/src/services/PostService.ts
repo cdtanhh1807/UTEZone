@@ -3,7 +3,10 @@ import axiosInstance from "../utils/AxiosInstance";
 export const postAPI = {
   getAll: () =>
     axiosInstance.get('/post/get_all_post').then((res) => res.data),
-
+  
+  getPostSuggest: () =>
+    axiosInstance.get('/post/get_post_suggest').then((res) => res.data),
+    
   getById: (id: string) =>
     axiosInstance.get(`/post/get_post/${id}`).then((res) => res.data),
 

@@ -6,9 +6,8 @@
   height: 60px; /* chiều cao header */
   width: 100%;
   padding: 0 20px;
-  background-color: white;
+  background-color: rgb(246, 246, 248);;
   border-bottom: 1px solid #ddd;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   position: relative;
   z-index: 10;
   font-family: 'Instagram Sans', sans-serif;
@@ -124,13 +123,13 @@
 .search-bar {
   display: flex;
   align-items: center;
-  width: 700px;
+  width: 720px;
   background-color: white;
   border: 1px solid #ddd;
   border-radius: 20px;
   padding: 5px 10px;
   transition: all 0.2s ease;
-  margin-left: 60px;
+  margin-left: 200px;
 }
 
 .search-bar input {
@@ -163,6 +162,7 @@
   align-items: flex-start; /* căn trái */
   gap: 20px;
   width: 100%;
+  border-bottom: 1px solid #ddd;
 }
 
 /* Thông tin người dùng (avatar + username) */

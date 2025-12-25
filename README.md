@@ -48,6 +48,7 @@ Di chuyển vào thư mục frontend và cài đặt các module Node cần thi�
 
 ```bash
 npm install
+npm audit fix
 ```
 
 ### 5. Tạo kho lưu trữ MinIO
@@ -57,9 +58,9 @@ Truy cập:
 http://localhost:9001
 ```
 
-- **Đăng nhập với Username: minioadmin và Password: minioadmin
-- **Nhấn Create Bucket
-- **Tên Bucket là ute-zone
+- Đăng nhập với Username: minioadmin và Password: minioadmin
+- Nhấn Create Bucket
+- Tên Bucket là ute-zone
 
 ## ▶️ Chạy Ứng dụng
 Sau khi cài đặt xong các dependencies, bạn cần khởi động máy chủ Backend và Frontend.

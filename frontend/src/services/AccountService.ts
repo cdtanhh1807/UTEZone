@@ -11,7 +11,16 @@ export interface FollowBlockResponse {
   message: boolean;
 }
 
+export interface GetRelationResponse {
+  followers?: string[];
+  followed?: string[];
+  blocks?: string[];
+}
+
+
 const AccountService = {
+  // ===== EXISTING METHODS =====
+
   get_account_info: (email?: string) =>
     axiosInstance
       .get("/account/account_info", {
@@ -55,6 +64,16 @@ const AccountService = {
     const res = await axiosInstance.put("/account/un_block", data);
     return res.data;
   },
+
+  get_account_relation: async (
+    email: string
+  ): Promise<GetRelationResponse> => {
+    const res = await axiosInstance.get(
+      `/account/account_relation/${encodeURIComponent(email)}`
+    );
+    return res.data;
+  },
 };
 
 export default AccountService;
+

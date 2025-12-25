@@ -13,4 +13,14 @@ export const StoryService = {
   // ⭐ NEW: lấy story theo từng user trong ngày
   getTodayStories: () =>
     axiosInstance.get('story/get_today_story').then(res => res.data),
+
+  // ⭐ NEW: xóa story theo story_id
+  deleteStory: (storyId: string) =>
+    axiosInstance
+      .delete(`/story/delete_story/${storyId}`)
+      .then(res => res.data)
+      .catch(err => {
+        console.error("Delete story error:", err);
+        throw err;
+      }),
 };

@@ -271,7 +271,7 @@ class ReportServiceImpl(IReportService):
                             contentAnnounce = "Bài viết " + post.post.title + "... của bạn đã bị gỡ vì vi phạm chính sách: " + polic.name
                         else: contentAnnounce = "Bài viết của bạn đã bị gỡ vì vi phạm chính sách " + polic.name
                         announce = Announce(senderEmail="Hệ thống", receiverEmail=post.post.createdBy, type="report", contentAnnounce=contentAnnounce,
-                                            isRead=False, createdAt=datetime.now(), contentId=str(post.post.id), policyName=polic.name,
+                                            isRead=False, createdAt=datetime.now(), contentId=str(post.post.id), policyName=polic.name, policyId=str(polic.id),
                                             approveBy=report_req.approveBy, approveAt=timestamp)
                         dic_announce_insert = await AnnounceRepository.insert(announce.model_dump())
                         #announce
@@ -287,7 +287,7 @@ class ReportServiceImpl(IReportService):
                         contentAnnounce: str = "Bình luận " + dic_comment_info.get("content") + "... của bạn đã bị gỡ vì vi phạm chính sách: " + polic.name
                         announce = Announce(senderEmail="Hệ thống", receiverEmail=dic_comment_info.get("commentBy"), type="report", contentAnnounce=contentAnnounce,
                                             isRead=False, createdAt=datetime.now(), contentId=report_req.elementId,
-                                            contentParentId=str(post.post.id), content=dic_comment_info.get("content"), policyName=polic.name,
+                                            contentParentId=str(post.post.id), content=dic_comment_info.get("content"), policyName=polic.name, policyId=str(polic.id),
                                             approveBy=report_req.approveBy, approveAt=timestamp)
                         dic_announce_insert = await AnnounceRepository.insert(announce.model_dump())
                         #announce
@@ -316,7 +316,7 @@ class ReportServiceImpl(IReportService):
                         #ban_with_redis
                         # delta = latest_end_at.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)
                         # seconds = int(delta.total_seconds())
-                        seconds = 20
+                        seconds = 86400
                         for idx, action in enumerate(["post", "comment", "message"]):
                             if ban_pernum[idx] == '0':
                                 await set_ban_countdown(ban.violatorEmail, action, seconds)
@@ -325,7 +325,7 @@ class ReportServiceImpl(IReportService):
                         #announce
                         contentAnnounce: str = "Bạn đã bị " + polic.action.detail + " do vi phạm chính sách: " + polic.name + " quá nhiều lần"
                         announce = Announce(senderEmail="Hệ thống", receiverEmail=ban.violatorEmail, type="account", contentAnnounce=contentAnnounce,
-                                            isRead=False, createdAt=datetime.now(), policyName=polic.name,
+                                            isRead=False, createdAt=datetime.now(), policyName=polic.name, policyId=str(polic.id),
                                             approveBy=report_req.approveBy, approveAt=timestamp)
                         dic_announce_insert = await AnnounceRepository.insert(announce.model_dump())
                         #announce
@@ -506,7 +506,6 @@ class ReportServiceImpl(IReportService):
         return GetReportOfDayResponse(success=True, data=rs)
     
     async def get_top_report(self, req: GetTopReportRequest) -> GetTopReportReponse:
-        print("ahkkk")
         rs_dic = await ReportRepository.get_reports_in_day(datetime.now())
         rs: List[TopReport] = []
         for dic in rs_dic:

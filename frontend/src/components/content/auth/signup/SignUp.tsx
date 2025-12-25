@@ -1,10 +1,12 @@
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { AxiosError } from "axios";
-import axiosInstance from '../../../../utils/AxiosInstance'
-import { isTokenExpired } from '../../../../utils/Auth'
-import './SignUp.css';
+import axiosInstance from '../../../../utils/AxiosInstance';
+import { isTokenExpired } from '../../../../utils/Auth';
 import { GoogleLoginBtn } from '../google/GoogleLoginBtn';
+import logo_truong from "../../../../assets/logo_login.png";
+import logo from "../../../../assets/logo.png";
+import './SignUp.css';
 
 type FormData = {
     email: string;
@@ -40,10 +42,7 @@ function SignUp() {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -64,18 +63,16 @@ function SignUp() {
         setError(null);
 
         try {
-        const response = await axiosInstance.post<{ message: string }>(
-            "/account/register/",
-            {
-                email: formData.email,
-                password: formData.password,
-            }
-        );
+            const response = await axiosInstance.post<{ message: string }>(
+                "/account/register/",
+                {
+                    email: formData.email,
+                    password: formData.password,
+                }
+            );
 
-        const res = response.data.message;
-
-        // chuyển sang trang verify otp
-        navigate("/verify-otp", { state: { email: formData.email, message: res } });
+            const res = response.data.message;
+            navigate("/verify-otp", { state: { email: formData.email, message: res } });
 
         } catch (err) {
             const error = err as AxiosError<{ message: string }>;
@@ -86,44 +83,60 @@ function SignUp() {
     };
 
     return (
-        <div className="signup-form">
-            <h2>Đăng ký</h2>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
+        <div className="signup-container">
+            <div className="signup-left">
+                <img
+                    src={logo_truong}
+                    alt="Signup Illustration"
+                    className="signup-image"
                 />
-                <input
-                    type="password"
-                    placeholder="Mật khẩu"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    autoComplete="new-password"
-                    required
+            </div>
+            <div className="signup-right">
+                <img
+                    src={logo}
+                    alt="Signup Logo"
+                    className="signup-logo-image"
                 />
-                <input
-                    type="password"
-                    placeholder="Xác nhận mật khẩu"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                />
-                <button className="signup-btn" type="submit" disabled={isLoading}>
-                    {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
-                </button>
-                {isLoading && <div className="loading-spinner">Đang tải...</div>}
-                {error && <div className="error-message">{error}</div>}
-                <p>Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
-                <div className="social-login">
-                    <GoogleLoginBtn />  
-                </div>
-            </form>
+                <form onSubmit={handleSubmit}>
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Mật khẩu"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        autoComplete="new-password"
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Xác nhận mật khẩu"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                    />
+                    <button className="signup-btn" type="submit" disabled={isLoading}>
+                        {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+                    </button>
+                    {isLoading && <div className="loading-spinner">Đang tải...</div>}
+                    {error && <div className="error-message">{error}</div>}
+
+                    <div className="social-login">
+                        <GoogleLoginBtn />  
+                    </div>
+                    <p className="login-link">
+                        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+                    </p>
+                </form>
+            </div>
         </div>
     );
 }

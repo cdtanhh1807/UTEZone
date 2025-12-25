@@ -30,6 +30,10 @@
   margin-top: 15px;
   gap: 10px;
 }
+.appealTextarea{
+  font-family: 'Courier New', Courier, monospace;
+  max-width: 430px;
+}
 
 .btn-cancel {
   background: #ccc;

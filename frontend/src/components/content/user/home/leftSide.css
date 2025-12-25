@@ -5,7 +5,7 @@
   height: 100vh;
   width: 13%;
   border-right: 1px solid #999999;
-  background-color: white;
+  background-color: rgb(250 250, 250);
 }
 
 .logoPart {
@@ -74,3 +74,91 @@
   margin-left: 8px;
 }
 
+.sidebar-relations-container {
+  margin-top: 20px;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-rel-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.side-rel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+}
+
+.side-rel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #65676b;
+  text-transform: uppercase;
+}
+
+.side-rel-arrow {
+  font-size: 14px !important;
+  color: #1877f2;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.side-rel-arrow:hover {
+  transform: scale(1.2);
+}
+
+.side-rel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.side-rel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.side-rel-item:hover {
+  background-color: #f0f2f5;
+}
+
+.side-rel-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.side-rel-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #050505;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.side-rel-empty {
+  font-size: 12px;
+  color: #90949c;
+  padding-left: 10px;
+  font-style: italic;
+}
+
+.side-divider {
+  height: 1px;
+  background-color: #ebedf0;
+  margin: 5px 10px;
+}

@@ -153,6 +153,61 @@ class AccountRepository:
 
         return results if results else None
 
+    @staticmethod
+    async def find_by_email(email: str) -> Optional[dict]:
+        doc = await AccountRepository.collection.find_one({"email": email})
+        if doc: return doc
+        return None
+    
+    # @staticmethod
+    # async def get_relation_by_email(email: str) -> Optional[dict]:
+    #     doc = await AccountRepository.collection.find_one({"email": email})
+        
+    #     if doc:
+    #         return {
+    #             'followers': doc.get('userInfo', {}).get('followers', []),
+    #             'followed': doc.get('userInfo', {}).get('followed', []),
+    #             'blocks': doc.get('userInfo', {}).get('blocks', [])
+    #         }
+    #     return None
+
+    @staticmethod
+    async def get_relation_by_email(email: str) -> Optional[dict]:
+        doc = await AccountRepository.collection.find_one({"email": email})
+
+        if not doc:
+            return None
+
+        user_info = doc.get('userInfo', {})
+        followers = user_info.get('followers', [])
+        followed = user_info.get('followed', [])
+        blocks = user_info.get('blocks', [])
+
+        # Gom tất cả email cần check status
+        all_emails = set(followers + followed + blocks)
+
+        if not all_emails:
+            return {
+                'followers': [],
+                'followed': [],
+                'blocks': []
+            }
+
+        # Lấy danh sách email còn active
+        cursor = AccountRepository.collection.find(
+            {
+                "email": { "$in": list(all_emails) },
+                "status": "active"
+            },
+            { "email": 1 }
+        )
+        active_emails = { doc["email"] async for doc in cursor }
+
+        return {
+            'followers': [e for e in followers if e in active_emails],
+            'followed': [e for e in followed if e in active_emails],
+            'blocks': [e for e in blocks if e in active_emails],
+        }
 
 
 

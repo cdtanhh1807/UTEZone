@@ -3,7 +3,18 @@ import {
   Route,
   NavLink,
   Navigate,
+  useNavigate,
 } from 'react-router-dom';
+import {
+  FiBarChart2,
+  FiUsers,
+  FiAlertTriangle,
+  FiClock,
+  FiSlash,
+  FiMessageSquare,
+  FiFileText,
+  FiLogOut,
+} from 'react-icons/fi';
 import styles from './AdminDashboard.module.css';
 import AccountManager from './AccountManager';
 import PolicyManager from './PolicyManager';
@@ -14,19 +25,27 @@ import Dashboard from './Dashboard';
 import ApproveHistory from './ApproveHistory';
 
 const SideBar: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   const navs = [
-    { to: '/admin', label: 'Thống kê', end: true },
-    { to: '/admin/account', label: 'Tài khoản' },
-    { to: '/admin/report', label: 'Tố cáo' },
-    { to: '/admin/approve_history', label: 'Lịch sử kiểm duyệt' },
-    { to: '/admin/ban', label: 'Chặn' },
-    { to: '/admin/complaint', label: 'Khiếu nại' },
-    { to: '/admin/policy', label: 'Chính sách' },
+    { to: '/admin', label: 'Thống kê', icon: <FiBarChart2 />, end: true },
+    { to: '/admin/account', label: 'Tài khoản', icon: <FiUsers /> },
+    { to: '/admin/report', label: 'Tố cáo', icon: <FiAlertTriangle /> },
+    { to: '/admin/approve_history', label: 'Lịch sử kiểm duyệt', icon: <FiClock /> },
+    { to: '/admin/ban', label: 'Chặn', icon: <FiSlash /> },
+    { to: '/admin/complaint', label: 'Khiếu nại', icon: <FiMessageSquare /> },
+    { to: '/admin/policy', label: 'Chính sách', icon: <FiFileText /> },
   ];
   return (
     <aside className={styles.sideBar}>
       <h2 className={styles.logo}>UTE Zone</h2>
-      <nav>
+
+      <nav className={styles.navWrap}>
         {navs.map((n) => (
           <NavLink
             key={n.to}
@@ -36,10 +55,19 @@ const SideBar: React.FC = () => {
               isActive ? styles.navActive : styles.navLink
             }
           >
-            {n.label}
+            <span className={styles.navIcon}>{n.icon}</span>
+            <span>{n.label}</span>
           </NavLink>
         ))}
       </nav>
+
+      {/* Nút Đăng xuất */}
+      <div className={styles.logoutBox}>
+        <button className={styles.logoutBtn} onClick={handleLogout}>
+          <FiLogOut className={styles.navIcon} />
+          <span>Đăng xuất</span>
+        </button>
+      </div>
     </aside>
   );
 };
@@ -68,7 +96,7 @@ const AdminDashboard: React.FC = () => (
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </div>
+    </div>  
   </div>
 );
 

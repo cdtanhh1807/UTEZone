@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from './AuthContext';
 import type { Message } from './useChat';
 import useWebSocket from './useWebSocket';
+import accountAPI from "../../../../services/AccountService"; 
 
 export type Conversation = {
     other_email: string;
@@ -17,6 +18,7 @@ export default function useConversations(selectedEmail: string | null) {
     const [list, setList] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const realtime = useWebSocket(token || '');
+
 
     /* ---------- load danh sách ---------- */
     const load = async () => {
@@ -34,6 +36,7 @@ export default function useConversations(selectedEmail: string | null) {
             setLoading(false);
         }
     };
+
 
     /* ---------- khi có tin NHẬN mới ---------- */
     const handleNewMessage = (msg: Message) => {

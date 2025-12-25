@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Dict, List, Optional
 from core.database import db
 from bson import ObjectId
 
@@ -182,11 +182,64 @@ class PostRepository:
             )
             return await PostRepository.find_by_id(post_id)
     
+    # @staticmethod
+    # async def find_by_email(email: str, ownerEmail: str) -> list[dict]:
+    #     posts = []
+    #     query = {
+    #         "createdBy": email,
+    #         "status": "active"
+    #     }
+    #     async for post in PostRepository.collection.find(query).sort("createdAt", -1):
+    #         posts.append(post)
+    #     return posts
     @staticmethod
-    async def find_by_email(email: str) -> list[dict]:
+    async def find_by_email(email: str, ownerEmail: str) -> List[Dict]:
         posts = []
-        async for post in PostRepository.collection.find({"createdBy": email}).sort("createdAt", -1):
+
+        # 🔥 CASE 1: Chủ bài tự xem bài của mình
+        if email == ownerEmail:
+            query = {
+                "createdBy": email,
+                "status": "active"
+            }
+
+            async for post in (
+                PostRepository.collection
+                .find(query)
+                .sort("createdAt", -1)
+            ):
+                posts.append(post)
+
+            return posts
+
+        # 🔥 CASE 2: Người khác xem bài
+        account = await AccountRepository.collection.find_one(
+            {"email": email},
+            {"userInfo.followers": 1}
+        )
+
+        followers = []
+        if account and "userInfo" in account:
+            followers = account["userInfo"].get("followers", [])
+
+        allowed_visibilities = ["public"]
+
+        if ownerEmail in followers:
+            allowed_visibilities.append("follow")
+
+        query = {
+            "createdBy": email,
+            "status": "active",
+            "visibility": {"$in": allowed_visibilities}
+        }
+
+        async for post in (
+            PostRepository.collection
+            .find(query)
+            .sort("createdAt", -1)
+        ):
             posts.append(post)
+
         return posts
 
     # @staticmethod
@@ -459,5 +512,68 @@ class PostRepository:
         ]
 
         return result
+    
+    @staticmethod
+    def department_to_email(department: str) -> str:
+        mapping = {
+            "CHÍNH TRỊ LUẬT": "ctl.hcmute@utezone.com",
+            "CƠ KHÍ CHẾ TẠO MÁY": "ckctm.hcmute@utezone.com",
+            "CƠ KHÍ ĐỘNG LỰC": "ckdl.hcmute@utezone.com",
+            "CÔNG NGHỆ HÓA HỌC VÀ THỰC PHẨM": "cnhtp.hcmute@utezone.com",
+            "CÔNG NGHỆ THÔNG TIN": "cntt.hcmute@utezone.com",
+            "ĐIỆN - ĐIỆN TỬ": "dtdt.hcmute@utezone.com",
+            "IN VÀ TRUYỀN THÔNG": "intt.hcmute@utezone.com",
+            "KHOA HỌC ỨNG DỤNG": "khud.hcmute@utezone.com",
+            "KINH TẾ": "kt.hcmute@utezone.com",
+            "NGOẠI NGỮ": "nn.hcmute@utezone.com",
+            "THỜI TRANG VÀ DU LỊCH": "ttdl.hcmute@utezone.com",
+            "XÂY DỰNG": "xd.hcmute@utezone.com",
+            "VIỆN SƯ PHẠM KỸ THUẬT": "vspkt.hcmute@utezone.com"
+        }
+
+        return mapping.get(department, "")
+
+    @staticmethod
+    async def get_post_suggest(email: str) -> List[Dict]:
+        posts = []
+
+        # 1. Tìm account theo email truyền vào
+        account = await AccountRepository.collection.find_one(
+            {"email": email, "status": "active"}
+        )
+        
+        if not account:
+            return posts
+
+        # 2. Lấy department của account
+        department = account.get("userInfo", {}).get("department", "")
+        department_email = PostRepository.department_to_email(department)
+        
+        # 3. Lấy bài post mới nhất của hcmute
+        hcmute_post = await PostRepository.collection.find_one(
+            {
+                "createdBy": "hcmute@utezone.com",
+                "status": "active"
+            },
+            sort=[("createdAt", -1)]
+        )
+
+        if hcmute_post:
+            posts.append(hcmute_post)
+
+        # 4. Lấy bài post mới nhất của khoa (department)
+        if department_email:
+            department_post = await PostRepository.collection.find_one(
+                {
+                    "createdBy": department_email,
+                    "status": "active"
+                },
+                sort=[("createdAt", -1)]
+            )
+
+            if department_post:
+                posts.append(department_post)
+
+        return posts
 
     

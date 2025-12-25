@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { Story } from "../../../../types/Story";
 import type { UserInfo } from "../../../../types/Account";
-import PauseIcon from '@mui/icons-material/Pause';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
+import { useNavigate } from "react-router-dom";
 import "./storyModal.css";
-import { jwtDecode } from 'jwt-decode';
+import { ToastService } from "../../../../services/ToastService";
+import ChevronLeftOutlinedIcon from "@mui/icons-material/ChevronLeftOutlined";
+import ChevronRightOutlinedIcon from "@mui/icons-material/ChevronRightOutlined";
+import { jwtDecode } from "jwt-decode";
+import { StoryService } from "../../../../services/StoryService";
 
 interface UserStory {
   userId: string;
@@ -28,7 +33,7 @@ const StoryModal: React.FC<StoryModalProps> = ({
   onClose,
   startUserId,
 }) => {
-
+  const [localStorys, setLocalStorys] = useState<UserStory[]>(storys);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
 
@@ -37,10 +42,13 @@ const StoryModal: React.FC<StoryModalProps> = ({
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [volume, setVolume] = useState(1);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const navigate = useNavigate();
+
+  // decode token để lấy currentUserEmail
   const token = localStorage.getItem("token");
   let currentUserEmail: string | null = null;
-
   if (token) {
     try {
       interface JwtPayload {
@@ -53,31 +61,25 @@ const StoryModal: React.FC<StoryModalProps> = ({
       console.error("❌ Token không hợp lệ:", err);
     }
   }
-  
 
-
-
+  // sync state localStorys khi props thay đổi
   useEffect(() => {
-    if (!storys || storys.length === 0) return;
+    setLocalStorys(storys);
     const startIndex = storys.findIndex((u) => u.userId === startUserId);
     setCurrentUserIndex(startIndex >= 0 ? startIndex : 0);
     setCurrentStoryIndex(0);
   }, [storys, startUserId]);
 
-  if (!isOpen || storys.length === 0) return null;
+  if (!isOpen || localStorys.length === 0) return null;
 
-  const currentUserStory = storys[currentUserIndex];
+  const currentUserStory = localStorys[currentUserIndex];
   const currentStory = currentUserStory.stories[currentStoryIndex];
   const userInfo = userInfoMap[currentUserStory.userId];
 
   const mediaSrc =
-    currentStory.mediaUrls?.[0] ||
-    currentStory.thumbnails?.[0] ||
-    "";
+    currentStory.mediaUrls?.[0] || currentStory.thumbnails?.[0] || "";
 
-  // ================================================================
-  //  1) LOAD VIDEO (LOOP TRONG TRIM, KHÔNG QUA STORY KHÁC)
-  // ================================================================
+  // ------------------- LOAD VIDEO -------------------
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -87,21 +89,23 @@ const StoryModal: React.FC<StoryModalProps> = ({
     if (currentStory.mediaType === "video") {
       vid.src = mediaSrc;
       vid.muted = currentStory.videoTrim?.hasOriginalSound === false;
-
       const trim = currentStory.videoTrim;
 
       vid.onloadedmetadata = () => {
         const start = trim?.startAt ?? 0;
         vid.currentTime = start;
 
-        vid.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+        vid
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
 
         if (trim?.duration) {
           const end = start + trim.duration;
 
           const check = () => {
             if (vid.currentTime >= end) {
-              vid.currentTime = start;   // LOOP
+              vid.currentTime = start; // LOOP
               vid.play();
             }
           };
@@ -112,15 +116,9 @@ const StoryModal: React.FC<StoryModalProps> = ({
     }
 
     return () => vid.pause();
-  }, [
-    currentUserIndex,
-    currentStoryIndex,
-    currentStory.mediaUrls,
-  ]);
+  }, [currentUserIndex, currentStoryIndex, currentStory.mediaUrls]);
 
-  // ================================================================
-  //  2) LOAD MUSIC (LOOP THEO TRIM, KHÔNG AUTO STOP)
-  // ================================================================
+  // ------------------- LOAD MUSIC -------------------
   useEffect(() => {
     const audio = musicRef.current;
     if (!audio) return;
@@ -134,14 +132,13 @@ const StoryModal: React.FC<StoryModalProps> = ({
     audio.onloadedmetadata = () => {
       const start = music.startAt ?? 0;
       audio.currentTime = start;
-      audio.play().catch(() => { });
+      audio.play().catch(() => {});
 
       if (music.duration) {
         const end = start + music.duration;
-
         const check = () => {
           if (audio.currentTime >= end) {
-            audio.currentTime = start;  // LOOP MUSIC
+            audio.currentTime = start;
             audio.play();
           }
         };
@@ -151,23 +148,15 @@ const StoryModal: React.FC<StoryModalProps> = ({
     };
 
     return () => audio.pause();
-  }, [
-    currentUserIndex,
-    currentStoryIndex,
-    currentStory.music?.fileid,
-  ]);
+  }, [currentUserIndex, currentStoryIndex, currentStory.music?.fileid]);
 
-  // ================================================================
-  //  3) VOLUME EFFECT (KHÔNG RESET VIDEO)
-  // ================================================================
+  // ------------------- VOLUME -------------------
   useEffect(() => {
     if (videoRef.current) videoRef.current.volume = volume;
     if (musicRef.current) musicRef.current.volume = volume;
   }, [volume]);
 
-  // ================================================================
-  //  4) CONTROLS GỘP
-  // ================================================================
+  // ------------------- CONTROLS -------------------
   const togglePlay = () => {
     const vid = videoRef.current;
     const audio = musicRef.current;
@@ -184,15 +173,15 @@ const StoryModal: React.FC<StoryModalProps> = ({
   };
 
   const toggleVolume = () => {
-    const newVol = volume === 0 ? 1 : 0;
-    setVolume(newVol);
+    setVolume(volume === 0 ? 1 : 0);
   };
+
   const handleNext = () => {
     if (currentStoryIndex < currentUserStory.stories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1);
     } else {
-      const nextUser = (currentUserIndex + 1) % storys.length;
-      setCurrentUserIndex(nextUser);
+      const nextUserIndex = (currentUserIndex + 1) % localStorys.length;
+      setCurrentUserIndex(nextUserIndex);
       setCurrentStoryIndex(0);
     }
   };
@@ -201,35 +190,80 @@ const StoryModal: React.FC<StoryModalProps> = ({
     if (currentStoryIndex > 0) {
       setCurrentStoryIndex(currentStoryIndex - 1);
     } else {
-      const prevUser = (currentUserIndex - 1 + storys.length) % storys.length;
-      setCurrentUserIndex(prevUser);
-      setCurrentStoryIndex(storys[prevUser].stories.length - 1);
+      const prevUserIndex =
+        (currentUserIndex - 1 + localStorys.length) % localStorys.length;
+      setCurrentUserIndex(prevUserIndex);
+      setCurrentStoryIndex(localStorys[prevUserIndex].stories.length - 1);
     }
   };
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // ------------------- DELETE STORY -------------------
+  const handleDeleteStory = async (storyId: string) => {
+    ToastService.confirm("Bạn có chắc muốn xóa tin này?", async () => {
+      try {
+        await StoryService.deleteStory(storyId);
+        ToastService.success("Đã xóa tin");
 
-  const handleDeleteStory = () => {
-    // TODO: gọi API xóa story
-    alert("Xóa story!");
+        // Reload sau 0.5s để toast hiển thị
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+
+        setLocalStorys((prev) => {
+          const updated = prev
+            .map((userStory) => ({
+              ...userStory,
+              stories: userStory.stories.filter((s) => s._id !== storyId),
+            }))
+            .filter((userStory) => userStory.stories.length > 0);
+
+          if (updated.length === 0) {
+            onClose(); // hết story → đóng modal
+            return [];
+          }
+
+          if (currentStoryIndex >= updated[currentUserIndex]?.stories.length) {
+            setCurrentStoryIndex(
+              Math.max(0, updated[currentUserIndex]?.stories.length - 1)
+            );
+          }
+
+          return updated;
+        });
+      } catch (error: any) {
+        console.error("Lỗi xóa story:", error);
+        ToastService.error(error.response?.data?.detail || "Xóa tin thất bại");
+      }
+    });
+
     setIsMenuOpen(false);
   };
 
   const handleReportStory = () => {
-    // TODO: gọi API báo cáo story
     alert("Báo cáo story!");
     setIsMenuOpen(false);
   };
 
-
   return (
     <div className="storyModalOverlay">
-      <button className="closeBtn" onClick={onClose}>✖</button>
+      <button className="closeBtn" onClick={onClose}>
+        ✖
+      </button>
       <div className="storyModalContent">
-
         <div className="storyHeader">
-          <img className="avatar" src={userInfo?.avatar || ""} />
-          <span className="username">{userInfo?.fullName}</span>
+          <img
+            className="avatar"
+            onClick={() => navigate(`/profile/${currentStory.createdBy || ""}`)}
+            style={{ cursor: "pointer" }}
+            src={userInfo?.avatar || ""}
+          />
+          <span
+            className="username"
+            onClick={() => navigate(`/profile/${currentStory.createdBy || ""}`)}
+            style={{ cursor: "pointer" }}
+          >
+            {userInfo?.fullName}
+          </span>
 
           <div className="musicControls">
             <button className="str-pause-btn" onClick={togglePlay}>
@@ -239,12 +273,22 @@ const StoryModal: React.FC<StoryModalProps> = ({
             <button onClick={toggleVolume}>
               {volume === 0 ? <VolumeOffIcon /> : <VolumeUpIcon />}
             </button>
-            <div className="storyMenuWrapper" style={{ position: "relative", display: "inline-block" }}>
-              <button className="storyMenuBtn" onClick={() => setIsMenuOpen(prev => !prev)}>⋮</button>
+            <div
+              className="storyMenuWrapper"
+              style={{ position: "relative", display: "inline-block" }}
+            >
+              <button
+                className="storyMenuBtn"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+              >
+                ⋮
+              </button>
               {isMenuOpen && (
                 <div className="storyMenuDropdown">
                   {currentUserEmail === currentUserStory.userId ? (
-                    <button onClick={handleDeleteStory}>Xóa</button>
+                    <button onClick={() => handleDeleteStory(currentStory._id)}>
+                      Xóa
+                    </button>
                   ) : (
                     <button onClick={handleReportStory}>Báo cáo</button>
                   )}
@@ -267,7 +311,9 @@ const StoryModal: React.FC<StoryModalProps> = ({
                 position: "absolute",
                 left: `${layer.x}%`,
                 top: `${layer.y}%`,
-                transform: `translate(-50%, -50%) scale(${layer.scale ?? 1}) rotate(${layer.rotate ?? 0}deg)`,
+                transform: `translate(-50%, -50%) scale(${
+                  layer.scale ?? 1
+                }) rotate(${layer.rotate ?? 0}deg)`,
                 color: layer.color,
                 fontFamily: layer.font || "Arial",
                 fontSize: layer.fontSize,
@@ -281,8 +327,14 @@ const StoryModal: React.FC<StoryModalProps> = ({
         </div>
 
         <div className="storyControls">
-          <button onClick={handlePrev}>◀</button>
-          <button onClick={handleNext}>▶</button>
+          <ChevronLeftOutlinedIcon
+            className="s-nav-left"
+            onClick={handlePrev}
+          />
+          <ChevronRightOutlinedIcon
+            className="s-nav-right"
+            onClick={handleNext}
+          />
         </div>
 
         <audio ref={musicRef} hidden />

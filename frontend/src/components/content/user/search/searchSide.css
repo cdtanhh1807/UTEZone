@@ -1,6 +1,9 @@
 .searchSide {
+  flex: 1;
+    overflow-y: auto; /* Quan trọng */
     padding: 20px;
     width: 100%;
+    min-height: 100vh;
 }
 
 .search-title {
@@ -35,9 +38,13 @@
 }
 
 .search-content {
+      flex-grow: 1;
+    overflow: visible;
     margin-top: 15px;
     border-top: 1px solid #ddd;
+    min-height: 100vh;
 }
+
 
 /* ---- Posts ---- */
 .post-card {

@@ -27,6 +27,8 @@ import { useNavigate } from "react-router-dom";
 import { FollowButton } from "../relationship/follow";
 import SharePostModal from "../create/sharePostModal";
 import PostDetail from "../post/postDetail";
+import ApproveModal from "../report/approveModal";
+import { ToastService } from "../../../../services/ToastService";
 
 interface ProfilePostProps {
   email?: string;
@@ -64,6 +66,8 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
   const [slideIndex, setSlideIndex] = useState<{ [key: string]: number }>({});
   const [isReactModalOpen, setReactModalOpen] = useState(false);
   const [selectedReactPost, setSelectedReactPost] = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [selectedReactComment, setSelectedReactComment] =
     useState<Comment | null>(null);
   const [reportPost, setReportPost] = useState<Post | null>(null);
@@ -88,22 +92,57 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
 
   const token = localStorage.getItem("token");
   let currentUserEmail: string | null = email || null;
+  let currentUserRole: string | null | null;
+  let emailCheckUser: string | null | null;
+  let roleCheckUser: string | null | null;
 
   if (!currentUserEmail && token) {
     try {
       interface JwtPayload {
         sub: string;
+        role: string;
         exp: number;
+        per: string;
       }
       const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
       currentUserEmail = decoded.sub;
+      currentUserRole = decoded.role;
     } catch (err) {
       console.error("❌ Token không hợp lệ:", err);
     }
   }
 
+  if (token) {
+    try {
+      interface JwtPayload {
+        sub: string;
+        role: string;
+        exp: number;
+        per: string;
+      }
+      const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
+      emailCheckUser = decoded.sub;
+      roleCheckUser = decoded.role;
+    } catch (err) {
+      console.error("❌ Token không hợp lệ:", err);
+    }
+  }
+
+  const canComment = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+
+    try {
+      const decoded: any = jwtDecode(token);
+      return decoded.per?.[1] === "1";
+    } catch {
+      return false;
+    }
+  };
+
   const fetchPosts = async () => {
     try {
+      console.log("tétttttttttt", currentUserEmail);
       let res;
 
       if (listPostSearch && listPostSearch.length > 0) {
@@ -291,19 +330,48 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
   };
 
   const handleAddComment = async (postId: string) => {
+    // 🔒 CHECK QUYỀN BÌNH LUẬN
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded: any = jwtDecode(token);
+        // per[1] === '0' → cấm comment
+        if (decoded.per?.[1] === "0") {
+          ToastService.error("Tài khoản của bạn đã bị cấm đăng tải bình luận");
+          return;
+        }
+      } catch {
+        ToastService.error(
+          "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"
+        );
+        return;
+      }
+    }
+
     const newComment = commentText[postId]?.trim();
-    if (!newComment) return alert("Vui lòng nhập nội dung bình luận!");
+    if (!newComment) {
+      ToastService.warning("Vui lòng nhập nội dung bình luận");
+      return;
+    }
+
     try {
       setOpenEmojiPicker(null);
-      await CommentService.addComment({ postId, content: newComment });
+
+      await CommentService.addComment({
+        postId,
+        content: newComment,
+      });
+
       const updated = await postAPI.getById(postId);
       const updatedPost = updated.post || updated;
+
       setPosts((prev) => prev.map((p) => (p._id === postId ? updatedPost : p)));
+
       setActivePost(updatedPost);
       setCommentText((prev) => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error(err);
-      alert("Không thể gửi bình luận!");
+      ToastService.error("Không thể thêm bình luận, vui lòng thử lại!");
     }
   };
 
@@ -343,18 +411,26 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
   const handleDeletePost = async (postId: string) => {
     if (!postId) return;
 
-    const confirmDelete = window.confirm("Bạn có chắc muốn xóa bài viết này?");
-    if (!confirmDelete) return;
+    ToastService.confirm(
+      "Bạn có chắc muốn xóa bài viết này?",
+      async () => {
+        try {
+          await postAPI.deletePost(postId);
 
-    try {
-      await postAPI.deletePost(postId);
-      alert("Xóa bài viết thành công!");
-      setPosts((prev) => prev.filter((p) => p._id !== postId));
-      setPostMenuOpen((prev) => ({ ...prev, [postId]: false }));
-    } catch (err) {
-      console.error("❌ Lỗi xóa bài viết:", err);
-      alert("Xóa bài viết thất bại!");
-    }
+          ToastService.success("Xóa bài viết thành công!");
+
+          setPosts((prev) => prev.filter((p) => p._id !== postId));
+          setPostMenuOpen((prev) => ({ ...prev, [postId]: false }));
+        } catch (err) {
+          console.error("❌ Lỗi xóa bài viết:", err);
+          ToastService.error("Xóa bài viết thất bại, vui lòng thử lại!");
+        }
+      },
+      {
+        confirmText: "Xóa",
+        cancelText: "Hủy",
+      }
+    );
   };
 
   const getIndex = (postId: string) => slideIndex[postId] ?? 0;
@@ -393,16 +469,27 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
     setReloadFlag((prev) => !prev);
   };
 
+  const handleRemove = (post: Post) => {
+    // đóng menu
+    setPostMenuOpen((prev) => ({ ...prev, [post._id]: false }));
+
+    // dùng requestAnimationFrame để chắc chắn render cập nhật
+    requestAnimationFrame(() => {
+      setSelectedPost(post); // lưu bài viết đang gỡ
+      setIsApproveOpen(true); // mở modal
+    });
+  };
+
   const handleBlock = async (ownerEmail: string) => {
-    if (!currentUserEmail) return;
+    if (!emailCheckUser) return;
 
     try {
       await AccountService.block({
-        owner: currentUserEmail,
+        owner: emailCheckUser,
         client: ownerEmail,
       });
 
-      console.log("Đã chặn:", ownerEmail);
+      console.log("Đã chặn:", emailCheckUser, ownerEmail);
 
       // 👉 Nếu bạn muốn update UI sau khi chặn:
       setUserInfoMap((prev) => ({
@@ -412,6 +499,11 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
           isBlocked: true,
         },
       }));
+      navigate("/home");
+      ToastService.success("Chặn thành công");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       console.error("Block failed:", err);
     }
@@ -423,14 +515,19 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
 
     setPosts((prev) => prev.map((p) => (p._id === postId ? updatedPost : p)));
     setActivePost(updatedPost);
-    
+  };
+  const handleRemovePostLocal = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
   };
 
   function formatTimeVN(dateString: string) {
-    const date = new Date(dateString);
-    const now = new Date();
+    const utcDate = new Date(dateString + "Z");
 
-    const diffMs = now.getTime() - date.getTime();
+    // Giờ Việt Nam = UTC + 7
+    const vnDate = new Date(utcDate.getTime() + 7 * 60 * 60 * 1000);
+    const nowVN = new Date(Date.now() + 7 * 60 * 60 * 1000);
+
+    const diffMs = nowVN.getTime() - vnDate.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -440,8 +537,22 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
     if (diffHours < 24) return `${diffHours} giờ trước`;
     if (diffDays < 3) return `${diffDays} ngày trước`;
 
-    return date.toLocaleString("vi-VN");
+    return vnDate.toLocaleString("vi-VN");
   }
+
+  const openOriginalPost = async (originalPostId: string) => {
+    try {
+      const res = await postAPI.getById(originalPostId);
+      const originalPost = res.post || res;
+      setIsPostDetailOpen(false);
+      requestAnimationFrame(() => {
+        setActivePost(originalPost);
+        setIsPostDetailOpen(true);
+      });
+    } catch (err) {
+      console.error("Không lấy được bài viết gốc", err);
+    }
+  };
 
   return (
     <div className="profilePost">
@@ -475,9 +586,8 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                   >
                     {userInfoMap[post.createdBy]?.fullName || post.createdBy}
                   </div>
-                  <div className="timingInfo">
-                    • {post.createdAt ? formatTimeVN(post.createdAt) : ""}
-                  </div>
+                  <div className="timingInfo">• {post.createdAt  ? formatTimeVN(post.createdAt)
+                                    : ""}</div>
                 </div>
 
                 <div className="follow-check">
@@ -522,7 +632,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                 >
                   {postMenuOpen[post._id] && (
                     <div className="menuDropdown">
-                      {post.createdBy === currentUserEmail ? (
+                      {post.createdBy === emailCheckUser ? (
                         <>
                           <div
                             className="menuItem"
@@ -533,6 +643,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                           >
                             ✏️ Chỉnh sửa bài đăng
                           </div>
+
                           <div
                             className="menuItem delete"
                             onClick={(e) => {
@@ -545,12 +656,26 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                         </>
                       ) : (
                         <>
-                          <div
-                            className="menuItem"
-                            onClick={() => handleReport(post)}
-                          >
-                            🚩 Báo cáo bài đăng
-                          </div>
+                          {/* Người khác nhưng không phải moderator */}
+                          {roleCheckUser !== "Moderator" && (
+                            <div
+                              className="menuItem"
+                              onClick={() => handleReport(post)}
+                            >
+                              🚩 Tố cáo bài đăng
+                            </div>
+                          )}
+
+                          {/* Nếu currentUser là Moderator → thêm Gỡ bài viết */}
+                          {roleCheckUser === "Moderator" && (
+                            <div
+                              className="menuItem delete"
+                              onClick={() => handleRemove(post)}
+                            >
+                              🛑 Gỡ bài viết
+                            </div>
+                          )}
+
                           <div
                             className="menuItem block"
                             onClick={(e) => {
@@ -597,7 +722,13 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
 
               {/* share bai */}
               {isShare && originalPost && (
-                <div className="post sharedPost">
+                <div
+                  className="post sharedPost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openPostDetail(originalPost);
+                  }}
+                >
                   {originalPost.thumbnails_url &&
                     originalPost.thumbnails_url.length > 0 && (
                       <div className="postImg">
@@ -631,26 +762,30 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                             {getIndex(originalPost._id) > 0 && (
                               <ChevronLeftOutlinedIcon
                                 className="nav-left"
-                                onClick={() =>
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handlePrev(
                                     originalPost._id,
                                     originalPost.thumbnails_url.length
-                                  )
-                                }
+                                  );
+                                }}
                               />
                             )}
+
                             {getIndex(originalPost._id) <
                               originalPost.thumbnails_url.length - 1 && (
                               <ChevronRightOutlinedIcon
                                 className="nav-right"
-                                onClick={() =>
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleNext(
                                     originalPost._id,
                                     originalPost.thumbnails_url.length
-                                  )
-                                }
+                                  );
+                                }}
                               />
                             )}
+
                             <div className="dots-post">
                               {originalPost.thumbnails_url.map((_, idx) => (
                                 <span
@@ -751,7 +886,13 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
               )}
 
               {post.thumbnails_url && post.thumbnails_url.length > 0 && (
-                <div className="postImg">
+                <div
+                  className="postImg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openPostDetail(post);
+                  }}
+                >
                   {/* Slide items */}
                   <div
                     className="postSlider"
@@ -779,13 +920,13 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                   {/* Navigation buttons */}
                   {post.thumbnails_url.length > 1 && (
                     <>
-                      {/* Chỉ hiển thị nút trái nếu không phải slide đầu */}
                       {getIndex(post._id) > 0 && (
                         <ChevronLeftOutlinedIcon
                           className="nav-left"
-                          onClick={() =>
-                            handlePrev(post._id, post.thumbnails_url.length)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrev(post._id, post.thumbnails_url.length);
+                          }}
                         />
                       )}
 
@@ -793,9 +934,10 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                       {getIndex(post._id) < post.thumbnails_url.length - 1 && (
                         <ChevronRightOutlinedIcon
                           className="nav-right"
-                          onClick={() =>
-                            handleNext(post._id, post.thumbnails_url.length)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNext(post._id, post.thumbnails_url.length);
+                          }}
                         />
                       )}
                     </>
@@ -910,7 +1052,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                     }}
                   />
 
-                  {post.createdBy !== currentUserEmail && (
+                  {post.createdBy !== emailCheckUser && (
                     <ShareOutlinedIcon
                       sx={{
                         fontSize: "23px",
@@ -963,7 +1105,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                     }}
                     placeholder={
                       commentCount > 0
-                        ? "Bình luận về bài viết này..."
+                        ? `Đã có ${commentCount} bình luận về bài viết này, bạn là người tiếp theo?`
                         : "Hãy là người bình luận đầu tiên!"
                     }
                     className="commentBox"
@@ -1007,8 +1149,15 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
           <PostDetail
             activePost={activePost}
             onClose={() => setIsPostDetailOpen(false)}
-            email={activePost.createdBy}
             onCommentAdded={refreshPost}
+            onOpenOriginalPost={openOriginalPost}
+            onPostDeleted={(postId: string) => {
+              setPosts((prev) => prev.filter((p) => p._id !== postId));
+              setIsPostDetailOpen(false); // đóng modal nếu xóa post
+            }}
+            onActivePostUpdate={(updatedPost: Post) => {
+              setActivePost(updatedPost); // cập nhật lại post sau khi edit
+            }}
           />
         )}
 
@@ -1033,14 +1182,25 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
         <ReportModal
           isOpen={!!reportPost}
           onClose={() => setReportPost(null)}
-          post={reportPost}
+          policy_type="bài đăng"
           type="post"
           violatorEmail={reportPost?.createdBy}
           content={reportPost?.content || ""}
           contentId={reportPost?._id}
           contentParentId=""
         />
-
+        {selectedPost && (
+          <ApproveModal
+            isOpen={isApproveOpen}
+            onClose={() => setIsApproveOpen(false)}
+            policy_element="bài đăng"
+            element="post"
+            elementId={selectedPost._id}
+            currentUserEmail={currentUserEmail ?? ""}
+            post={selectedPost} // <- truyền bài viết vào modal
+            onRemoved={() => handleRemovePostLocal(selectedPost._id)}
+          />
+        )}
 
         {selectedReactPost && (
           <ReactList

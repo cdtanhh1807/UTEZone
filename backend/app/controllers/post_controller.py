@@ -4,6 +4,7 @@ from core.redis import get_viewed_posts
 from dto.post.request.add_post_request import AddPostRequest
 from dto.post.request.get_my_post_request import GetMyPostRequest
 from dto.post.request.get_post_by_email_request import GetPostByEmailRequest
+from dto.post.request.get_post_suggest_request import GetPostSuggestRequest
 from dto.post.request.share_post_request import SharePostRequest
 from dto.post.request.update_comment_status_request import UpdateCommentStatusRequest
 from dto.post.response.add_post_response import AddPostResponse
@@ -11,6 +12,7 @@ from dto.post.request.get_post_request import GetPostRequest
 from dto.post.response.get_post_by_email_response import GetPostByEmailResponse
 from dto.post.response.get_post_response import GetPostResponse
 from dto.post.request.update_post_request import UpdatePostRequest
+from dto.post.response.get_post_suggest_response import GetPostSuggestResponse
 from dto.post.response.update_post_react_response import UpdatePostReactResponse
 from dto.post.response.update_post_response import UpdatePostResponse
 from dto.post.request.get_all_post_request import GetAllPostRequest
@@ -159,9 +161,10 @@ async def toggle_react(
 @router.get("/get_post_by_email/{email}", response_model=GetPostByEmailResponse)
 async def get_post_by_email(
     email: str,
+    current_user: dict = Depends(get_current_user),
     service: IPostService = Depends(get_post_service)
 ):
-    req = GetPostByEmailRequest(email=email)
+    req = GetPostByEmailRequest(email=email, ownerEmail=current_user["sub"])
     posts = await service.get_by_email(req)
 
     for p in posts.post_list:
@@ -225,4 +228,26 @@ async def list_posts(
         raise HTTPException(status_code=403, detail="Failed!")
     req = GetTopInteractedPostRequest()
     rs= await service.get_top_interacted_posts_in_week(req)
+    return rs
+
+# @router.get("/get_top_post", response_model=GetTopInteractedPostReponse)
+# async def list_posts(
+#     current_user: dict = Depends(get_current_user),
+#     service: IPostService = Depends(get_post_service)
+# ):
+#     if (current_user["role"] != "Administrator"):
+#         raise HTTPException(status_code=403, detail="Failed!")
+#     req = GetTopInteractedPostRequest()
+#     rs= await service.get_top_interacted_posts_in_week(req)
+#     return rs
+
+@router.get("/get_post_suggest", response_model=GetPostSuggestResponse)
+async def post_suggest(
+    current_user: dict = Depends(get_current_user),
+    service: IPostService = Depends(get_post_service)
+):
+    if (current_user["role"] == "Administrator"):
+        raise HTTPException(status_code=403, detail="Failed!")
+    req = GetPostSuggestRequest(email=current_user["sub"])
+    rs= await service.get_post_suggest(req)
     return rs

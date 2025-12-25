@@ -3,11 +3,17 @@ import axiosInstance from "../utils/AxiosInstance";
 export const reportAPI = {
     sendReport: (data: any) =>
         axiosInstance
-        .post("/report/send_report", data)
-        .then((res) => res.data),
+            .post("/report/send_report", data)
+            .then((res) => res.data),
 
-    getAllAnnounce: () =>
+    getAllAnnounce: (content: string) =>
         axiosInstance
-        .get("/policy/get_all_policy")
-        .then(res => res.data),   
-    };
+            .post("/policy/get_all_policy_content", { content })
+            .then(res => res.data),
+
+    approveReport: (data: any) =>
+        axiosInstance
+            .put("/report/approve_report", data)
+            .then(res => res.data),
+};
+

@@ -3,8 +3,9 @@ import MiddleSide from './middleSide';
 import RightSide from './rightSide';
 import SearchSide from '../search/searchSide';
 import { useLocation } from "react-router-dom";
+import type { homedir } from 'os';
 
-function App() {
+function Home() {
 
   const location = useLocation();
   const isSearching = location.pathname === "/search";
@@ -22,4 +23,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;

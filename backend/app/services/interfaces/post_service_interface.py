@@ -4,10 +4,12 @@ from dto.post.request.add_post_request import AddPostRequest
 from dto.post.request.get_my_post_request import GetMyPostRequest
 from dto.post.request.get_post_by_email_request import GetPostByEmailRequest
 from dto.post.request.get_post_request import GetPostRequest
+from dto.post.request.get_post_suggest_request import GetPostSuggestRequest
 from dto.post.response.add_post_response import AddPostResponse 
 from dto.post.response.get_post_by_email_response import GetPostByEmailResponse
 from dto.post.response.get_post_response import GetPostResponse
 from dto.post.request.update_post_request import UpdatePostRequest
+from dto.post.response.get_post_suggest_response import GetPostSuggestResponse
 from dto.post.response.update_post_response import UpdatePostResponse
 from dto.post.request.get_all_post_request import GetAllPostRequest
 from dto.post.response.get_all_post_response import GetAllPostResponse 
@@ -68,4 +70,8 @@ class IPostService(ABC):
 
     @abstractmethod
     async def get_top_interacted_posts_in_week(self, req: GetTopInteractedPostRequest) -> GetTopInteractedPostReponse:
+        pass
+
+    @abstractmethod
+    async def get_post_suggest(self, req: GetPostSuggestRequest) -> GetPostSuggestResponse:
         pass

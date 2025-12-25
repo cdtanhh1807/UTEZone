@@ -3,12 +3,15 @@ import "./createStory.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoryService } from "../../../../services/StoryService";
 import FileService from "../../../../services/FileService";
+import { ToastService } from "../../../../services/ToastService";
 import MusicTrimBar from "./MusicTrimBar";
+import { toast } from "react-toastify";
 
 interface CreateStoryProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: string;
+  onStoryCreated?: () => void;
 }
 
 interface TextLayer {
@@ -20,7 +23,12 @@ interface TextLayer {
   fontSize: number;
 }
 
-export default function CreateStory({ isOpen, onClose, currentUser }: CreateStoryProps) {
+export default function CreateStory({
+  isOpen,
+  onClose,
+  currentUser,
+  onStoryCreated,
+}: CreateStoryProps) {
   const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
@@ -194,7 +202,11 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
       setTextLayers((prev) =>
         prev.map((layer) =>
           layer.id === id
-            ? { ...layer, x: Math.min(100, Math.max(0, x)), y: Math.min(100, Math.max(0, y)) }
+            ? {
+                ...layer,
+                x: Math.min(100, Math.max(0, x)),
+                y: Math.min(100, Math.max(0, y)),
+              }
             : layer
         )
       );
@@ -220,58 +232,79 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
   };
 
   /** Đăng story */
-  const handlePost = async () => {
-    if (!currentUser) return;
+  const handleStory = async () => {
+    if (!currentUser || !fileId) {
+      ToastService.warning("Vui lòng chọn ảnh hoặc video");
+      return;
+    }
 
-    const payload = {
-      createdBy: currentUser,
-      createdAt: new Date().toISOString(),
-      mediaType: file?.type.startsWith("image/") ? "image" : "video",
-      expiresAt: new Date(Date.now() + 86400000).toISOString(),
-      mediaUrls: [fileId],
-      thumbnails: [fileId],
-      textLayers: textLayers.map(t => ({
-        text: t.text,
-        x: t.x,
-        y: t.y,
-        color: t.color,
-        fontSize: t.fontSize
-      })),
-      videoTrim: file?.type.startsWith("video/")
-        ? {
-            startAt: videoStartAt,
-            duration: videoDuration,
-            hasOriginalSound: useOriginalSound,
-          }
-        : undefined,
-      music: musicFileId
-        ? {
-            name: musicName,
-            fileid: musicFileId,
-            startAt: musicStartAt,
-            duration: musicDuration,
-          }
-        : undefined,
-      status: "active",
-      viewedBy: [],
-    };
+    try {
+      const payload = {
+        createdBy: currentUser,
+        createdAt: new Date().toISOString(),
+        mediaType: file?.type.startsWith("image/") ? "image" : "video",
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        mediaUrls: [fileId],
+        thumbnails: [fileId],
+        textLayers: textLayers.map((t) => ({
+          text: t.text,
+          x: t.x,
+          y: t.y,
+          color: t.color,
+          fontSize: t.fontSize,
+        })),
+        videoTrim: file?.type.startsWith("video/")
+          ? {
+              startAt: videoStartAt,
+              duration: videoDuration,
+              hasOriginalSound: useOriginalSound,
+            }
+          : undefined,
+        music: musicFileId
+          ? {
+              name: musicName,
+              fileid: musicFileId,
+              startAt: musicStartAt,
+              duration: musicDuration,
+            }
+          : undefined,
+        status: "active",
+        viewedBy: [],
+      };
 
-    await StoryService.addStory(payload);
-    onClose();
+      await StoryService.addStory(payload);
+      await onStoryCreated?.();
+      ToastService.success("Đăng tin thành công!");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+
+      onClose();
+    } catch (err) {
+      console.error(err);
+      ToastService.error("Đăng tin thất bại, vui lòng thử lại");
+    }
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div className="story-backdrop" onClick={onClose}>
-          <motion.div className="story-modal" onClick={(e) => e.stopPropagation()}>
+          <motion.div
+            className="story-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* STEP 0 */}
             {step === 0 && (
               <div className="story-upload-step">
                 <h2>Chọn ảnh hoặc video</h2>
                 <label className="story-upload-box">
                   Chọn file
-                  <input type="file" accept="image/*,video/*" onChange={handleMediaUpload} />
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleMediaUpload}
+                  />
                 </label>
               </div>
             )}
@@ -304,7 +337,10 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
             {/* STEP 2 */}
             {step === 2 && (
               <div className="story-editor-full">
-                <div className="editor-preview" style={{ position: "relative" }}>
+                <div
+                  className="editor-preview"
+                  style={{ position: "relative" }}
+                >
                   {file?.type.startsWith("image/") && <img src={preview} />}
                   {file?.type.startsWith("video/") && (
                     <video
@@ -340,7 +376,12 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
 
                 {/* EDIT TOOLS */}
                 <div className="editor-tools">
-                  <button onClick={() => setShowMusicTrim(true)} className="tool-btn">🎵</button>
+                  <button
+                    onClick={() => setShowMusicTrim(true)}
+                    className="tool-btn"
+                  >
+                    🎵
+                  </button>
                   {file?.type.startsWith("video/") && (
                     <button
                       onClick={() => setUseOriginalSound((p) => !p)}
@@ -349,7 +390,9 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                       {useOriginalSound ? "🔊" : "🔇"}
                     </button>
                   )}
-                  <button onClick={addNewTextLayer} className="tool-btn">🅰️</button>
+                  <button onClick={addNewTextLayer} className="tool-btn">
+                    🅰️
+                  </button>
                 </div>
 
                 {/* TEXT EDIT PANEL */}
@@ -359,11 +402,16 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                     {/* Input chữ */}
                     <input
                       type="text"
-                      value={textLayers.find(t => t.id === activeTextId)?.text || ""}
+                      value={
+                        textLayers.find((t) => t.id === activeTextId)?.text ||
+                        ""
+                      }
                       onChange={(e) =>
-                        setTextLayers(prev =>
-                          prev.map(t =>
-                            t.id === activeTextId ? { ...t, text: e.target.value } : t
+                        setTextLayers((prev) =>
+                          prev.map((t) =>
+                            t.id === activeTextId
+                              ? { ...t, text: e.target.value }
+                              : t
                           )
                         )
                       }
@@ -375,11 +423,16 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                       type="color"
                       id="hidden-color-input"
                       className="hidden-color-input"
-                      value={textLayers.find(t => t.id === activeTextId)?.color || "#ffffff"}
+                      value={
+                        textLayers.find((t) => t.id === activeTextId)?.color ||
+                        "#ffffff"
+                      }
                       onChange={(e) =>
-                        setTextLayers(prev =>
-                          prev.map(t =>
-                            t.id === activeTextId ? { ...t, color: e.target.value } : t
+                        setTextLayers((prev) =>
+                          prev.map((t) =>
+                            t.id === activeTextId
+                              ? { ...t, color: e.target.value }
+                              : t
                           )
                         )
                       }
@@ -394,7 +447,8 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                         className="color-circle-inner"
                         style={{
                           backgroundColor:
-                            textLayers.find(t => t.id === activeTextId)?.color || "#ffffff",
+                            textLayers.find((t) => t.id === activeTextId)
+                              ?.color || "#ffffff",
                         }}
                       />
                     </div>
@@ -404,10 +458,13 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                       type="range"
                       min={10}
                       max={100}
-                      value={textLayers.find(t => t.id === activeTextId)?.fontSize || 24}
+                      value={
+                        textLayers.find((t) => t.id === activeTextId)
+                          ?.fontSize || 24
+                      }
                       onChange={(e) =>
-                        setTextLayers(prev =>
-                          prev.map(t =>
+                        setTextLayers((prev) =>
+                          prev.map((t) =>
                             t.id === activeTextId
                               ? { ...t, fontSize: parseInt(e.target.value) }
                               : t
@@ -418,9 +475,7 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                   </div>
                 )}
 
-
-
-                <button className="post-btn-fixed" onClick={handlePost}>
+                <button className="post-btn-fixed" onClick={handleStory}>
                   Đăng tin
                 </button>
               </div>
@@ -432,7 +487,11 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                 {!musicFile && (
                   <label className="music-upload-box">
                     Chọn nhạc từ máy
-                    <input type="file" accept="audio/*" onChange={handleMusicUpload} />
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={handleMusicUpload}
+                    />
                   </label>
                 )}
                 {musicFile && (
@@ -451,7 +510,10 @@ export default function CreateStory({ isOpen, onClose, currentUser }: CreateStor
                         }
                       }}
                     />
-                    <button className="close-trim" onClick={() => setShowMusicTrim(false)}>
+                    <button
+                      className="close-trim"
+                      onClick={() => setShowMusicTrim(false)}
+                    >
                       Xong
                     </button>
                   </div>

@@ -21,6 +21,16 @@ interface Props {
   userInfoMap: Record<string, UserInfo>; // email -> UserInfo
 }
 
+// Mapping react key sang tiếng Việt
+const reactTypeVN: Record<string, string> = {
+  love: "Yêu thích",
+  like: "Thích",
+  haha: "Haha",
+  wow: "Wow",
+  sad: "Buồn",
+  angry: "Giận",
+};
+
 const getReactTabs = (reacts: Reacts) => {
   const entries = Object.entries(reacts);
   const filtered = entries.filter(([_, arr]) => arr.length > 0);
@@ -93,7 +103,7 @@ const ReactList = ({ isOpen, onClose, reacts, userInfoMap }: Props) => {
                 className={`react-tab ${activeTab === "all" ? "active" : ""}`}
                 onClick={() => setActiveTab("all")}
               >
-                All
+                Tất cả
               </div>
 
               {top3.map(([type, arr]) => (
@@ -102,7 +112,7 @@ const ReactList = ({ isOpen, onClose, reacts, userInfoMap }: Props) => {
                   className={`react-tab ${activeTab === type ? "active" : ""}`}
                   onClick={() => setActiveTab(type)}
                 >
-                  {type} ({arr.length})
+                  {reactTypeVN[type] || type} ({arr.length})
                 </div>
               ))}
 
@@ -111,7 +121,7 @@ const ReactList = ({ isOpen, onClose, reacts, userInfoMap }: Props) => {
                   className={`react-tab ${activeTab === "more" ? "active" : ""}`}
                   onClick={() => setActiveTab("more")}
                 >
-                  More
+                  Khác
                 </div>
               )}
             </div>
@@ -120,7 +130,7 @@ const ReactList = ({ isOpen, onClose, reacts, userInfoMap }: Props) => {
             <div className="react-list">
               {users.map((email) => {
                 const u = localUserInfoMap[email];
-                if (!u) return <div key={email}>Loading...</div>;
+                if (!u) return <div key={email}>Đang tải...</div>;
 
                 return (
                   <div key={email} className="react-user">

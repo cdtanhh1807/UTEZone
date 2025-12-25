@@ -63,7 +63,7 @@ async def get_today_story(
         message="Get today's stories successfully"
     )
 
-@router.delete("/delete_post/{story_id}", response_model=DeleteStoryResponse)
+@router.delete("/delete_story/{story_id}", response_model=DeleteStoryResponse)
 async def delete_post(
     story_id: str,
     current_user: dict = Depends(get_current_user),

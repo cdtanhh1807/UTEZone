@@ -1,41 +1,26 @@
-db = db.getSiblingDB("admin");
+const archive = '/docker-entrypoint-initdb.d/UTEZone.gz';
 
-db.createUser({
-    user: "root",
-    pwd: "root",
-    roles: [{ role: "root", db: "admin" }]
-});
+const admin = db.getSiblingDB('admin');
+admin.auth('root', 'root');
 
-db = db.getSiblingDB("UTEZone");
+print('⏳ Đang restore UTEZone từ', archive);
+var exitCode = runProgram(
+    '/usr/bin/mongorestore',
+    '--host', 'localhost',
+    '--port', '27017',
+    '-u', 'root',
+    '-p', 'root',
+    '--authenticationDatabase', 'admin',
+    '--nsFrom=UTEZone.*',
+    '--nsTo=UTEZone.*',
+    '--archive=' + archive,
+    '--gzip',
+    '--drop',
+    '--quiet'
+);
 
-db.account.insertOne({
-  type: "internal",
-  email: "admin",
-  password: "$2b$12$0EWmWEN/vQrVRvPB6rh9P.mFxkDHo0wjn2Nc4I78P3Eoybd8WHS16",
-  role: "Administrator",
-  status: "active",
-  userInfo: {
-      fullName: 'Quản trị viên',
-      phone: '',
-      address: '',
-      email: '',
-      day_of_birth: '',
-      followers: [],
-      followed: [],
-      blocks: [],
-      description: '',
-      department: "Công nghệ thông tin"
-  },
-  permission: { pernum: '111', validity: '3333-12-12T12:00:00Z' }
-});
-
-db.post.createIndex({ visibility: 1, status: 1, createdAt: -1 });
-db.post.createIndex({ createdBy: 1, createdAt: -1 });
-db.post.createIndex({ "react.love": 1 });
-db.post.createIndex({ "react.like": 1 });
-db.post.createIndex({ "react.haha": 1 });
-db.post.createIndex({ "react.wow": 1 });
-db.post.createIndex({ "react.sad": 1 });
-db.post.createIndex({ "react.angry": 1 });
-db.post.createIndex({ "comments.commentBy": 1 });
-db.account.createIndex({ email: 1 });
+if (exitCode !== 0) {
+    print('❌ Mongorestore thất bại, exit code:', exitCode);
+    quit(exitCode);
+}
+print('✅ Restore xong database UTEZone');
