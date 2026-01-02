@@ -2,7 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 
 
-MONGO_URL = "mongodb://root:root@localhost:27019/?authSource=admin"
+MONGO_URL = "mongodb://root:root@localhost:27017/?authSource=admin"
 DB_NAME = "UTEZone"
 
 client = AsyncIOMotorClient(MONGO_URL)
