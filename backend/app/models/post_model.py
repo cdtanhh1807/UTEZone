@@ -60,6 +60,8 @@ class Post(BaseModel):
     thumbnails: Optional[List[str]] = Field(default_factory=list)
     thumbnails_url: Optional[List[str]] = Field(default_factory=list)
     
+    ai_summary: Optional[str] = None
+    
     class Config:
         validate_by_name = True
         arbitrary_types_allowed = True

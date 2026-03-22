@@ -170,9 +170,9 @@ async def get_post_by_email(
     for p in posts.post_list:
         if p.thumbnails:
             p.thumbnails_url = [FileService.get_file_url(file_id) for file_id in p.thumbnails]
+            print(p.thumbnails_url)
         else:
             p.thumbnails_url = []
-
     return posts
 
 @router.get("/get_my_post", response_model=GetAllPostResponse)
