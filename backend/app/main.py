@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from controllers import announce_controller, ban_controller, comment_controller, complaint_controller, message_controller, policy_controller, post_controller, report_controller, search_controller, story_controller
+from controllers import ai_controller, announce_controller, ban_controller, comment_controller, complaint_controller, message_controller, policy_controller, post_controller, report_controller, search_controller, story_controller
 from controllers import account_controller
 from core.database import init_db 
 from controllers import file_controller
@@ -49,4 +49,5 @@ app.include_router(comment_controller.router, prefix="/comment", tags=["comment"
 app.include_router(message_controller.router, prefix="/message", tags=["message"])
 app.include_router(announce_controller.router, prefix="/announce", tags=["announce"])
 app.include_router(story_controller.router, prefix="/story", tags=["story"])
+app.include_router(ai_controller.router, prefix="/ai", tags=["ai"])
 app.add_websocket_route("/ws", websocket_endpoint)

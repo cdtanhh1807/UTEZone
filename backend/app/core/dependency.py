@@ -1,3 +1,4 @@
+from services.impls.ai_service_impl import AIServiceImpl
 from services.impls.announce_service_impl import AnnounceServiceImpl
 from services.impls.ban_service_impl import BanServiceImpl
 from services.impls.comment_service_impl import CommentServiceImpl
@@ -7,6 +8,7 @@ from services.impls.policy_service_impl import PolicyServiceImpl
 from services.impls.report_service_impl import ReportServiceImpl
 from services.impls.search_service_impl import SearchServiceImpl
 from services.impls.story_service_impl import StoryServiceImpl
+from services.interfaces.ai_service_interface import IAIService
 from services.interfaces.announce_service_interface import IAnnounceService
 from services.interfaces.ban_service_interface import IBanService
 from services.interfaces.comment_service_interface import ICommentService
@@ -53,3 +55,6 @@ def get_message_service() -> IMessageService:
 
 def get_announce_service() -> IAnnounceService:
     return AnnounceServiceImpl()
+
+def get_ai_service() -> IAIService:
+    return AIServiceImpl()
