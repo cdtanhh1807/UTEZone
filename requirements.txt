@@ -12,3 +12,4 @@ rapidfuzz
 pytz
 minio
 python-multipart
+aiohttp

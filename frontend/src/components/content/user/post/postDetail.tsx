@@ -24,6 +24,7 @@ import SharePostModal from "../create/sharePostModal";
 import EditPost from "../create/editPost";
 import ReportModal from "../report/reportModal";
 import { ToastService } from "../../../../services/ToastService";
+import AddToPhotosIcon from "@mui/icons-material/AddToPhotos";
 
 interface DetailPostProps {
   activePost: Post;
@@ -68,7 +69,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
     Record<string, boolean>
   >({});
   const [postPopoverMap, setPostPopoverMap] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
   const [initializedReactMap, setInitializedReactMap] = useState(false);
   const [postMenuOpen, setPostMenuOpen] = useState<Record<string, boolean>>({});
@@ -79,6 +80,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isApproveOpen, setIsApproveOpen] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [selectedReactComment, setSelectedReactComment] =
     useState<Comment | null>(null);
   const [reportPost, setReportPost] = useState<Post | null>(null);
@@ -91,6 +93,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
   const hasFocusedRef = useRef(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [commentFiles, setCommentFiles] = useState<File[]>([]);
 
   const defaultReact: ReactType = {
     love: [],
@@ -177,7 +180,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
             console.error("❌ Lỗi lấy user info:", email, err);
             return [email, null] as [string, UserInfo | null];
           }
-        })
+        }),
       );
 
       const userMap: Record<string, UserInfo> = {};
@@ -205,7 +208,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
     posts.forEach((post) => {
       const entry = post.react
         ? Object.entries(post.react).find(([_, users]) =>
-            (users as string[]).includes(currentUserEmail!)
+            (users as string[]).includes(currentUserEmail!),
           )
         : null;
 
@@ -214,7 +217,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
       post.comments?.forEach((cmt) => {
         const cmtEntry = cmt.reacts
           ? Object.entries(cmt.reacts).find(([_, users]) =>
-              (users as string[]).includes(currentUserEmail!)
+              (users as string[]).includes(currentUserEmail!),
             )
           : null;
 
@@ -274,17 +277,17 @@ const PostDetail: React.FC<DetailPostProps> = ({
 
   const handleReact = async (
     postId: string,
-    type: "love" | "like" | "haha" | "wow" | "sad" | "angry"
+    type: "love" | "like" | "haha" | "wow" | "sad" | "angry",
   ) => {
     try {
       const response = await postAPI.updateReact(postId, type);
       const updatedReact = response.react;
       setPosts((prev) =>
-        prev.map((p) => (p._id === postId ? { ...p, react: updatedReact } : p))
+        prev.map((p) => (p._id === postId ? { ...p, react: updatedReact } : p)),
       );
       if (currentUserEmail) {
         const reactedEntry = Object.entries(updatedReact).find(([_, users]) =>
-          (users as string[]).includes(currentUserEmail!)
+          (users as string[]).includes(currentUserEmail!),
         );
         setUserReactMap((prev) => ({
           ...prev,
@@ -299,35 +302,37 @@ const PostDetail: React.FC<DetailPostProps> = ({
   const handleCommentReact = async (
     postId: string,
     commentId: string,
-    type: "love" | "like" | "haha" | "wow" | "sad" | "angry"
+    type: "love" | "like" | "haha" | "wow" | "sad" | "angry",
   ) => {
     try {
       const response = await CommentService.updateCommentReact(
         postId,
         commentId,
-        type
+        type,
       );
       const updatedReact = response.react;
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
           if (post._id !== postId) return post;
           const updatedComments = post.comments?.map((cmt) =>
-            cmt.commentId === commentId ? { ...cmt, reacts: updatedReact } : cmt
+            cmt.commentId === commentId
+              ? { ...cmt, reacts: updatedReact }
+              : cmt,
           );
           return { ...post, comments: updatedComments };
-        })
+        }),
       );
 
       if (activePost && activePost._id === postId) {
         const updatedComments = activePost.comments?.map((cmt) =>
-          cmt.commentId === commentId ? { ...cmt, reacts: updatedReact } : cmt
+          cmt.commentId === commentId ? { ...cmt, reacts: updatedReact } : cmt,
         );
         onCommentAdded("");
         Object.assign(activePost, { comments: updatedComments });
       }
       const entry = currentUserEmail
         ? Object.entries(updatedReact).find(([_, users]) =>
-            (users as string[]).includes(currentUserEmail!)
+            (users as string[]).includes(currentUserEmail!),
           )
         : null;
 
@@ -407,16 +412,16 @@ const PostDetail: React.FC<DetailPostProps> = ({
           return {
             ...post,
             comments: post.comments?.filter(
-              (cmt) => cmt.commentId !== commentId
+              (cmt) => cmt.commentId !== commentId,
             ),
           };
-        })
+        }),
       );
 
       // ✅ 2. Cập nhật activePost (QUAN TRỌNG)
       if (activePost && activePost._id === postId) {
         const updatedComments = activePost.comments?.filter(
-          (cmt) => cmt.commentId !== commentId
+          (cmt) => cmt.commentId !== commentId,
         );
 
         Object.assign(activePost, { comments: updatedComments });
@@ -522,13 +527,13 @@ const PostDetail: React.FC<DetailPostProps> = ({
           ...post,
           comments: post.comments?.filter((cmt) => cmt.commentId !== commentId),
         };
-      })
+      }),
     );
 
     // 2. update activePost (RẤT QUAN TRỌNG)
     if (activePost) {
       const updatedComments = activePost.comments?.filter(
-        (cmt) => cmt.commentId !== commentId
+        (cmt) => cmt.commentId !== commentId,
       );
 
       Object.assign(activePost, { comments: updatedComments });
@@ -584,7 +589,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
       {
         confirmText: "Xóa",
         cancelText: "Hủy",
-      }
+      },
     );
   };
 
@@ -596,6 +601,27 @@ const PostDetail: React.FC<DetailPostProps> = ({
       setSelectedPost(post); // lưu bài viết đang gỡ
       setIsApproveOpen(true); // mở modal
     });
+  };
+  const handleReply = (comment: any) => {
+    if (!activePost?._id) return;
+
+    const username =
+      userInfoMap[comment.commentBy]?.fullName || comment.commentBy;
+
+    const tag = `@${username} `;
+
+    setCommentText((prev) => ({
+      ...prev,
+      [activePost._id]: tag,
+    }));
+
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+    }, 0);
+  };
+  const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setCommentFiles(files);
   };
 
   function formatTimeVN(dateString: string) {
@@ -695,7 +721,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                           onClick={() =>
                             handlePrev(
                               activePost._id,
-                              activePost.thumbnails_url.length
+                              activePost.thumbnails_url.length,
                             )
                           }
                         />
@@ -708,7 +734,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                           onClick={() =>
                             handleNext(
                               activePost._id,
-                              activePost.thumbnails_url.length
+                              activePost.thumbnails_url.length,
                             )
                           }
                         />
@@ -1054,7 +1080,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                             e.stopPropagation();
                                             handleDeleteComment(
                                               activePost._id,
-                                              comment.commentId
+                                              comment.commentId,
                                             );
                                             setOpenCommentMenu({});
                                           }}
@@ -1148,7 +1174,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                     handleCommentReact(
                                       activePost._id || "",
                                       comment.commentId,
-                                      "love"
+                                      "love",
                                     )
                                   }
                                 >
@@ -1185,7 +1211,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "love"
+                                          "love",
                                         )
                                       }
                                     >
@@ -1196,7 +1222,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "like"
+                                          "like",
                                         )
                                       }
                                     >
@@ -1207,7 +1233,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "haha"
+                                          "haha",
                                         )
                                       }
                                     >
@@ -1218,7 +1244,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "wow"
+                                          "wow",
                                         )
                                       }
                                     >
@@ -1229,7 +1255,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "sad"
+                                          "sad",
                                         )
                                       }
                                     >
@@ -1240,7 +1266,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                         handleCommentReact(
                                           activePost._id || "",
                                           comment.commentId,
-                                          "angry"
+                                          "angry",
                                         )
                                       }
                                     >
@@ -1251,7 +1277,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                               </div>
                               {Object.values(comment.reacts || {}).reduce(
                                 (s, arr) => s + arr.length,
-                                0
+                                0,
                               ) > 0 && (
                                 <label
                                   className="countReact-Comment"
@@ -1262,11 +1288,17 @@ const PostDetail: React.FC<DetailPostProps> = ({
                                 >
                                   {Object.values(comment.reacts || {}).reduce(
                                     (s, arr) => s + arr.length,
-                                    0
+                                    0,
                                   )}{" "}
                                   lượt bày tỏ cảm xúc
                                 </label>
                               )}
+                              <button
+                                className="reply-btn"
+                                onClick={() => handleReply(comment)}
+                              >
+                                Trả lời
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -1281,6 +1313,7 @@ const PostDetail: React.FC<DetailPostProps> = ({
                 className="commentInput"
                 onClick={(e) => e.stopPropagation()}
               >
+                {/* EMOJI */}
                 <div className="emojiWrapper">
                   <InsertEmoticonOutlinedIcon
                     sx={{ fontSize: 22, color: "#777", cursor: "pointer" }}
@@ -1289,10 +1322,11 @@ const PostDetail: React.FC<DetailPostProps> = ({
                       setOpenEmojiPicker((prev) =>
                         prev?.type === "modal"
                           ? null
-                          : { type: "modal", postId: activePost._id || "" }
+                          : { type: "modal", postId: activePost._id || "" },
                       );
                     }}
                   />
+
                   {openEmojiPicker?.type === "modal" &&
                     openEmojiPicker.postId === (activePost._id || "") && (
                       <div className="emojiPickerContainer">
@@ -1304,17 +1338,38 @@ const PostDetail: React.FC<DetailPostProps> = ({
                       </div>
                     )}
                 </div>
+
+                {/* UPLOAD MEDIA */}
+                <div className="uploadWrapper">
+                  <label htmlFor="commentUpload">
+                    <AddToPhotosIcon />
+                  </label>
+
+                  <input
+                    id="commentUpload"
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    style={{ display: "none" }}
+                    onChange={handleSelectFiles}
+                  />
+                </div>
+
+                {/* TEXTAREA */}
                 <textarea
+                  ref={commentInputRef}
                   value={
                     activePost?._id ? commentText[activePost._id] || "" : ""
                   }
                   onChange={(e) => {
                     if (!activePost?._id) return;
                     const value = e.target.value;
+
                     setCommentText((prev) => ({
                       ...prev,
                       [activePost._id]: value,
                     }));
+
                     e.target.style.height = "auto";
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
@@ -1322,10 +1377,11 @@ const PostDetail: React.FC<DetailPostProps> = ({
                   className="commentBox"
                   rows={1}
                   onKeyDown={(e) => {
-                    if (!activePost?._id) return; // 🟢 ensure postId exists
+                    if (!activePost?._id) return;
+
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      handleAddComment(activePost._id); // always use activePost._id trực tiếp
+                      handleAddComment(activePost._id);
                     }
                   }}
                 />

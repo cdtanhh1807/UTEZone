@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { postAPI } from "../../../../services/PostService";
+import { aiAPI } from "../../../../services/AIService";
 import AccountService from "../../../../services/AccountService";
 import CommentService from "../../../../services/CommentService";
 import type { Post } from "../../../../types/Post";
@@ -16,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import MoreHorizOutlinedIcon from "@mui/icons-material/MoreHorizOutlined";
 import CreatePost from "../create/createPost";
+import SummaryBox from "../summary/summaryPost";
 import ReportModal from "../report/reportModal";
 import EditPost from "../create/editPost";
 import ReactList from "../create/reactList";
@@ -56,7 +58,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
     Record<string, boolean>
   >({});
   const [postPopoverMap, setPostPopoverMap] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
   const [initializedReactMap, setInitializedReactMap] = useState(false);
   const [postMenuOpen, setPostMenuOpen] = useState<Record<string, boolean>>({});
@@ -76,6 +78,8 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
   }>({});
   const [openShareModal, setOpenShareModal] = useState(false);
   const [sharePost, setSharePost] = useState<Post | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
   const [originalPostCache, setOriginalPostCache] = useState<
     Record<string, Post>
   >({});
@@ -186,7 +190,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
             console.error("❌ Lỗi lấy user info:", email, err);
             return [email, null] as [string, UserInfo | null];
           }
-        })
+        }),
       );
 
       const userMap: Record<string, UserInfo> = {};
@@ -214,7 +218,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
     posts.forEach((post) => {
       const entry = post.react
         ? Object.entries(post.react).find(([_, users]) =>
-            (users as string[]).includes(currentUserEmail!)
+            (users as string[]).includes(currentUserEmail!),
           )
         : null;
 
@@ -223,7 +227,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
       post.comments?.forEach((cmt) => {
         const cmtEntry = cmt.reacts
           ? Object.entries(cmt.reacts).find(([_, users]) =>
-              (users as string[]).includes(currentUserEmail!)
+              (users as string[]).includes(currentUserEmail!),
             )
           : null;
 
@@ -262,17 +266,17 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
 
   const handleReact = async (
     postId: string,
-    type: "love" | "like" | "haha" | "wow" | "sad" | "angry"
+    type: "love" | "like" | "haha" | "wow" | "sad" | "angry",
   ) => {
     try {
       const response = await postAPI.updateReact(postId, type);
       const updatedReact = response.react;
       setPosts((prev) =>
-        prev.map((p) => (p._id === postId ? { ...p, react: updatedReact } : p))
+        prev.map((p) => (p._id === postId ? { ...p, react: updatedReact } : p)),
       );
       if (currentUserEmail) {
         const reactedEntry = Object.entries(updatedReact).find(([_, users]) =>
-          (users as string[]).includes(currentUserEmail!)
+          (users as string[]).includes(currentUserEmail!),
         );
         setUserReactMap((prev) => ({
           ...prev,
@@ -287,27 +291,29 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
   const handleCommentReact = async (
     postId: string,
     commentId: string,
-    type: "love" | "like" | "haha" | "wow" | "sad" | "angry"
+    type: "love" | "like" | "haha" | "wow" | "sad" | "angry",
   ) => {
     try {
       const response = await CommentService.updateCommentReact(
         postId,
         commentId,
-        type
+        type,
       );
       const updatedReact = response.react;
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
           if (post._id !== postId) return post;
           const updatedComments = post.comments?.map((cmt) =>
-            cmt.commentId === commentId ? { ...cmt, reacts: updatedReact } : cmt
+            cmt.commentId === commentId
+              ? { ...cmt, reacts: updatedReact }
+              : cmt,
           );
           return { ...post, comments: updatedComments };
-        })
+        }),
       );
       const entry = currentUserEmail
         ? Object.entries(updatedReact).find(([_, users]) =>
-            (users as string[]).includes(currentUserEmail!)
+            (users as string[]).includes(currentUserEmail!),
           )
         : null;
       setUserCommentReactMap((prev) => ({
@@ -342,7 +348,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
         }
       } catch {
         ToastService.error(
-          "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"
+          "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại",
         );
         return;
       }
@@ -429,10 +435,40 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
       {
         confirmText: "Xóa",
         cancelText: "Hủy",
-      }
+      },
     );
   };
 
+  const handleSummary = async (postId: string) => {
+    console.log("CLICK SUMMARY");
+
+    if (!postId) return;
+
+    try {
+      // 1️⃣ Gọi API AI để tạo summary
+      await aiAPI.summarizePost(postId);
+
+      // 2️⃣ Lấy lại post mới nhất
+      const res = await postAPI.getById(postId);
+      const data = res.post;
+
+      // 3️⃣ Cache post
+      setOriginalPostCache((prev) => ({
+        ...prev,
+        [postId]: data,
+      }));
+
+      console.log("AI Summary:", data.ai_summary);
+
+      // 4️⃣ Hiển thị summary
+      setSummaryText(data.ai_summary || "Không có tóm tắt.");
+      setShowSummary(true);
+    } catch (err) {
+      console.error("AI summary error:", err);
+      setSummaryText("Không thể tóm tắt bài đăng.");
+      setShowSummary(true);
+    }
+  };
   const getIndex = (postId: string) => slideIndex[postId] ?? 0;
 
   const handleNext = (postId: string, total: number) => {
@@ -586,14 +622,15 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                   >
                     {userInfoMap[post.createdBy]?.fullName || post.createdBy}
                   </div>
-                  <div className="timingInfo">• {post.createdAt  ? formatTimeVN(post.createdAt)
-                                    : ""}</div>
+                  <div className="timingInfo">
+                    • {post.createdAt ? formatTimeVN(post.createdAt) : ""}
+                  </div>
                 </div>
 
                 <div className="follow-check">
                   {post.createdBy !== currentUserEmail &&
                     !userInfoMap[post.createdBy]?.followers?.includes(
-                      currentUserEmail || ""
+                      currentUserEmail || "",
                     ) && (
                       <FollowButton
                         ownerEmail={currentUserEmail!}
@@ -642,6 +679,16 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                             }}
                           >
                             ✏️ Chỉnh sửa bài đăng
+                          </div>
+
+                          <div
+                            className="menuItem"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSummary(post._id);
+                            }}
+                          >
+                            Tóm tắt bài đăng
                           </div>
 
                           <div
@@ -766,7 +813,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                                   e.stopPropagation();
                                   handlePrev(
                                     originalPost._id,
-                                    originalPost.thumbnails_url.length
+                                    originalPost.thumbnails_url.length,
                                   );
                                 }}
                               />
@@ -780,7 +827,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                                   e.stopPropagation();
                                   handleNext(
                                     originalPost._id,
-                                    originalPost.thumbnails_url.length
+                                    originalPost.thumbnails_url.length,
                                   );
                                 }}
                               />
@@ -827,7 +874,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                         : (() => {
                             // Nếu chưa có fullName, gọi API lấy thông tin user
                             AccountService.get_account_info(
-                              originalPost.createdBy
+                              originalPost.createdBy,
                             )
                               .then((info) => {
                                 if (info) {
@@ -840,8 +887,8 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                               .catch((err) =>
                                 console.error(
                                   "❌ Lỗi lấy thông tin user gốc:",
-                                  err
-                                )
+                                  err,
+                                ),
                               );
                             // Khi đang load hiển thị email tạm thời
                             return originalPost.createdBy;
@@ -851,7 +898,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                       •{" "}
                       {originalPost.createdAt
                         ? new Date(originalPost.createdAt).toLocaleString(
-                            "vi-VN"
+                            "vi-VN",
                           )
                         : ""}
                     </div>
@@ -1070,7 +1117,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
 
               {Object.values(post.react || {}).reduce(
                 (s, arr) => s + arr.length,
-                0
+                0,
               ) > 0 && (
                 <label
                   className="countReact-Post"
@@ -1081,7 +1128,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                 >
                   {Object.values(post.react || {}).reduce(
                     (s, arr) => s + arr.length,
-                    0
+                    0,
                   )}{" "}
                   lượt bày tỏ cảm xúc
                 </label>
@@ -1125,7 +1172,7 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
                         setOpenEmojiPicker((prev) =>
                           prev?.type === "post" && prev.postId === post._id
                             ? null
-                            : { type: "post", postId: post._id }
+                            : { type: "post", postId: post._id },
                         );
                       }}
                     />
@@ -1224,6 +1271,12 @@ const ListPost: React.FC<ProfilePostProps> = ({ email, listPostSearch }) => {
           postId={sharePost?._id || ""}
           onShared={handleShared} // 👈 thêm dòng này
         />
+        {showSummary && (
+          <SummaryBox
+            summary={summaryText}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
       </div>
     </div>
   );

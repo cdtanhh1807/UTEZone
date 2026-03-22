@@ -641,3 +641,57 @@
 .selectDepartment{
   margin-left: 10px;
 }
+.attachmentSection{
+  margin-top:10px;
+}
+
+.attachBtn{
+  display:inline-block;
+  cursor:pointer;
+  background:#f0f2f5;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:14px;
+  transition:0.2s;
+}
+
+.attachBtn:hover{
+  background:#e4e6eb;
+}
+
+.attachBtn input{
+  display:none;
+}
+
+.attachmentList{
+  margin-top:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.attachmentItem{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#f7f7f7;
+  padding:6px 10px;
+  border-radius:6px;
+}
+
+.fileName{
+  font-size:13px;
+  color:#333;
+}
+
+.removeAttachment{
+  border:none;
+  background:none;
+  cursor:pointer;
+  font-size:14px;
+  color:#888;
+}
+
+.removeAttachment:hover{
+  color:#e53935;
+}

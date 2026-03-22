@@ -27,6 +27,9 @@ const LeftSide = () => {
 
   const [followersPreview, setFollowersPreview] = useState<any[]>([]);
   const [followedPreview, setFollowedPreview] = useState<any[]>([]);
+
+  const [departments, setDepartments] = useState<any[]>([]);
+
   const [storys, setStorys] = useState<UserStory[]>([]);
   interface UserStory {
     userId: string;
@@ -89,6 +92,31 @@ const LeftSide = () => {
     fetchRelations();
   }, [currentUserEmail, isRelationshipModalOpen]); // Reload preview khi modal đóng (có thể có thay đổi)
 
+
+  useEffect(() => {
+  const fetchDepartments = async () => {
+    try {
+      const res = await AccountService.get_account_info("Moderator");// thay get_account_info bằng API lấy danh sách khoa nếu có, hiện tại tạm thời lấy thông tin tài khoản để demo
+
+      const data = await Promise.all(
+        res.map(async (email: string) => {
+          const info = await AccountService.get_account_info(email);
+          return {
+            email,
+            fullName: info.fullName,
+            avatar: info.avatar,
+          };
+        })
+      );
+
+      setDepartments(data);
+    } catch (err) {
+      console.error("❌ Lỗi lấy danh sách khoa:", err);
+    }
+  };
+
+  fetchDepartments();
+}, []);
   const handleLogout = async () => {
     if (!token) return;
     try {
@@ -230,6 +258,8 @@ const LeftSide = () => {
             {renderRelationSection("Theo dõi", followersPreview, 0)}
             <div className="side-divider" />
             {renderRelationSection("Đang theo dõi", followedPreview, 1)}
+            <div className="side-divider" />
+            {renderRelationSection("Khoa", departments, 2)}
           </div>
 
           <div className="bellowPart">

@@ -50,9 +50,10 @@ const CreatePost = ({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [visibility, setVisibility] = useState<"public" | "follow" | "private">(
-    "public"
+    "public",
   );
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
 
   const visibilityText = {
@@ -195,6 +196,15 @@ const CreatePost = ({
     }
     setLoading(false);
   };
+  const handleAttachmentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+
+    setAttachments((prev) => [...prev, ...selected]);
+  };
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleNext = () => {
     if (step === 0) {
@@ -291,7 +301,7 @@ const CreatePost = ({
                     className="nav-left"
                     onClick={() =>
                       setCurrentIndex(
-                        (currentIndex - 1 + previews.length) % previews.length
+                        (currentIndex - 1 + previews.length) % previews.length,
                       )
                     }
                   />
@@ -323,11 +333,11 @@ const CreatePost = ({
 
                           setFiles((prev) => prev.filter((_, i) => i !== idx));
                           setPreviews((prev) =>
-                            prev.filter((_, i) => i !== idx)
+                            prev.filter((_, i) => i !== idx),
                           );
 
                           setCurrentIndex((prev) =>
-                            Math.max(0, Math.min(prev, previews.length - 2))
+                            Math.max(0, Math.min(prev, previews.length - 2)),
                           );
                         }}
                       >
@@ -423,6 +433,34 @@ const CreatePost = ({
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                   />
+                  {/* ATTACHMENT FILE */}
+                  <div className="attachmentSection">
+                    <label className="attachBtn">
+                      📎 Đính kèm tệp
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleAttachmentUpload}
+                      />
+                    </label>
+
+                    {attachments.length > 0 && (
+                      <div className="attachmentList">
+                        {attachments.map((file, idx) => (
+                          <div key={idx} className="attachmentItem">
+                            <span className="fileName">📄 {file.name}</span>
+
+                            <button
+                              className="removeAttachment"
+                              onClick={() => removeAttachment(idx)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="visibilitySelector" ref={menuRef}>
                     <span
                       className="dots"

@@ -110,6 +110,26 @@
     text-decoration: underline;
 }
 
+.password-wrapper{
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input{
+  width: 100%;
+  padding-right: 45px;
+  max-width: 270px;
+}
+
+.toggle-password{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #777;
+  margin-right: 30px;
+}
 /* Responsive nhỏ hơn 768px thì xếp dọc */
 @media (max-width: 768px) {
     .login-container {

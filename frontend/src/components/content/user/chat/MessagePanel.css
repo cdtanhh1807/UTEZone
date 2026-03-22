@@ -124,4 +124,26 @@
 .panel-animate {
   opacity: 1 !important; /* luôn hiển thị, không bao giờ fade */
 }
+.upload-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  margin-right:6px;
+}
+
+.upload-icon svg{
+  font-size:22px;
+  color:#666;
+  transition:0.2s;
+}
+
+.upload-icon:hover svg{
+  color:#1877f2;
+  transform:scale(1.1);
+}
+
+.upload-icon input{
+  display:none;
+}
 

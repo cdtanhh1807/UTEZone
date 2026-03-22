@@ -42,5 +42,6 @@ export interface Post {
   lastEdited?: string;
   thumbnails?: string[];
   thumbnails_url: string[];
+  ai_summary?: string;
   postId?: string;
 }

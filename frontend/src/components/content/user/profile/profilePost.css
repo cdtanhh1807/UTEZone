@@ -273,6 +273,7 @@
 }
 .postContent p{
   margin: 5px 0px;
+  white-space: pre-line;
 }
 .postTitle{
   width: 100%;
@@ -735,4 +736,68 @@
 .options-btn:focus {
   outline: none;
   border: none;
+}
+.reply-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #65676b;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.reply-btn:hover {
+  background-color: #f0f2f5;
+  color: #1877f2;
+}
+
+.model-postVideo {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: black;
+}
+
+/* container của media */
+.slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ảnh trong post */
+.model-postImage {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.uploadWrapper{
+  display:flex;
+  align-items:center;
+  margin-right:8px;
+}
+
+.uploadWrapper label{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+}
+
+/* style icon */
+.uploadWrapper svg{
+  font-size:22px;
+  color:#777;
+  transition:0.2s;
+}
+
+/* hover */
+.uploadWrapper label:hover svg{
+  color:#1877f2;
+  transform:scale(1.1);
 }

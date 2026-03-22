@@ -12,7 +12,7 @@ class OllamaClient:
     """
     
     # Config mặc định - có thể override qua constructor
-    DEFAULT_BASE_URL = "http://localhost:11434"
+    DEFAULT_BASE_URL = "http://10.122.240.252:11434"
     DEFAULT_MODEL = "llama3.1:8b"
     DEFAULT_TIMEOUT = 60
     DEFAULT_VISION_MODEL = "qwen2.5vl:7b" #Thêm model vision mặc định

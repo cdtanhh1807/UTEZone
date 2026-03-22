@@ -4,6 +4,8 @@ import { useAuth } from "./AuthContext";
 import accountAPI from "../../../../services/AccountService";
 import "./MessagePanel.css";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
 
 type Props = {
   otherEmail: string;
@@ -12,6 +14,8 @@ type Props = {
 const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
   const { email: me } = useAuth();
   const { messages, sendMessage } = useChat(otherEmail);
+  const [images, setImages] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
 
   const [text, setText] = useState("");
   const [userInfo, setUserInfo] = useState<{
@@ -60,6 +64,17 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
   const goToProfile = (email: string) => {
     window.location.href = `/profile/${email}`;
   };
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+    setImages((prev) => [...prev, ...selected]);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+    setFiles((prev) => [...prev, ...selected]);
+  };
 
   return (
     <div className={`panel ${anim ? "panel-animate" : ""}`}>
@@ -79,7 +94,7 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
             style={{ cursor: "pointer" }}
             onClick={() => goToProfile(otherEmail)}
           >
-            {userInfo?.fullName || "Đang tải..."}
+            {userInfo?.fullName}
           </div>
         </div>
       </div>
@@ -98,6 +113,23 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
 
       {/* Input */}
       <div className="panel-input">
+        {/* upload image */}
+        <label className="upload-icon">
+          <ImageOutlinedIcon />
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleImageUpload}
+          />
+        </label>
+
+        {/* upload file */}
+        <label className="upload-icon">
+          <AttachFileOutlinedIcon />
+          <input type="file" multiple onChange={handleFileUpload} />
+        </label>
+
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -106,11 +138,12 @@ const MessagePanel: React.FC<Props> = ({ otherEmail }) => {
           rows={1}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault(); // Ngăn xuống dòng
+              e.preventDefault();
               onSend();
             }
           }}
         />
+
         <button onClick={onSend}>
           <SendRoundedIcon />
         </button>

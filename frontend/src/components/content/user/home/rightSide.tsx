@@ -6,6 +6,7 @@ import PostDetail from "../post/postDetail";
 import { postAPI } from "../../../../services/PostService";
 import RightFeed from "./rightFeed";
 import { useLocation } from "react-router-dom";
+import logochat from "../../../../assets/logochat.png";
 
 export default function RightSide() {
   const [openMessage, setOpenMessage] = useState(false);
@@ -71,7 +72,8 @@ export default function RightSide() {
 
       {/* ====== CHAT BUTTON ====== */}
       <button className="floating-ribbon" onClick={() => setOpenMessage(true)}>
-        Nhắn tin
+        <img src={logochat} alt="Chat" />
+        <span className="chat-badge">5</span>
       </button>
 
       {/* ====== CHAT BOX ====== */}
@@ -90,6 +92,6 @@ export default function RightSide() {
           onOpenOriginalPost={openOriginalPost}
         />
       )}
-    </div>  
+    </div>
   );
 }

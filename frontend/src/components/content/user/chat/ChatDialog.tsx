@@ -27,7 +27,7 @@ const ChatDialog: React.FC<Props> = ({ onClose }) => {
     }
   }, [list]);
 
-  if (loading) return <div className="loading-box">Đang tải...</div>;
+  if (loading) return <div className="loading-box"></div>;
 
   return (
     <div ref={dialogRef} className="chat-dialog">

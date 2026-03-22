@@ -4,33 +4,51 @@
 
 /* ================= FLOATING RIBBON ================= */
 .floating-ribbon {
-  position: fixed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   right: 20px;
-  bottom: 40px;
-
-  background: linear-gradient(135deg, #5672ff, #2e44f5);
-  color: #fff;
-
-  padding: 12px 36px 12px 24px;
-  font-weight: 600;
-  font-size: 15px;
-
+  bottom: 1px;
+  padding: 1px 2px;
   border-radius: 8px 0 0 8px;
   cursor: pointer;
-
-  clip-path: polygon(
-    0% 0%,
-    85% 0%,
-    100% 50%,
-    85% 100%,
-    0% 100%,
-    10% 50%
-  );
-
-  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
   transition: 0.25s ease;
+
+  position: fixed;
 }
 
+/* Logo */
+.floating-ribbon img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+}
+
+/* Badge số */
+.chat-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+
+  background-color: red;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+
+  min-width: 5px;
+  height: 20px;
+  padding: 0 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  margin-top: 60px;
+  margin-right: 60px;
+  border: 2px solid white;
+}
 /* Gấp mép ruy băng */
 .floating-ribbon::after {
   content: "";
@@ -44,9 +62,14 @@
 }
 
 .floating-ribbon:hover {
-  background: linear-gradient(135deg, #6e88ff, #3a52ff);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+  transform: translateY(-5px);
+}
+
+.floating-ribbon:focus,
+.floating-ribbon:active,
+.floating-ribbon:focus-visible {
+  outline: none;
+  border: none;
 }
 
 /* ================= CHAT ================= */
