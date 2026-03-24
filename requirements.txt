@@ -13,3 +13,10 @@ pytz
 minio
 python-multipart
 aiohttp
+playwright>=1.40.0
+beautifulsoup4>=4.12.0
+python-dateutil>=2.8.0
+lxml
+httpx
+
+#nhớ run thêm: playwright install

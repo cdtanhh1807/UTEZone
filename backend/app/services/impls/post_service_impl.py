@@ -31,7 +31,7 @@ from core.redis import (
     get_cached_feed, cache_feed,
     get_viewed_posts, mark_post_viewed, invalidate_feed_cache
 )
-MAX_TAKE = 20
+MAX_TAKE = 1000
 
 
 class PostServiceImpl(IPostService):

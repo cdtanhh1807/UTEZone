@@ -5,7 +5,10 @@ from controllers import account_controller
 from core.database import init_db 
 from controllers import file_controller
 from fastapi.middleware.cors import CORSMiddleware
-from controllers.websocket_controller import websocket_endpoint
+# from controllers.websocket_controller import websocket_endpoint
+from controllers.websocket_controller import router as websocket_router
+
+from crawl.importdata.fit_import_router import router as crawl_router
 
 import asyncio  
 from utils.permission_watcher import permission_watcher_loop 
@@ -50,4 +53,6 @@ app.include_router(message_controller.router, prefix="/message", tags=["message"
 app.include_router(announce_controller.router, prefix="/announce", tags=["announce"])
 app.include_router(story_controller.router, prefix="/story", tags=["story"])
 app.include_router(ai_controller.router, prefix="/ai", tags=["ai"])
-app.add_websocket_route("/ws", websocket_endpoint)
+app.include_router(crawl_router, prefix="/crawl", tags=["crawl"])
+# app.add_websocket_route("/ws", websocket_endpoint)
+app.include_router(websocket_router)

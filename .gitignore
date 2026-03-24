@@ -28,3 +28,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Crawl
+backend/app/crawl/output/
+backend/app/crawl/command.txt
