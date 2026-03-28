@@ -1,3 +1,5 @@
+from typing import List
+
 from core.database import db
 from bson import ObjectId
 from datetime import datetime, timezone
@@ -9,7 +11,7 @@ class CommentRepository:
     collection = db["post"]
 
     @staticmethod
-    async def add_comment(post_id: str, user_id: str, comment_data: dict):
+    async def add_comment(post_id: str, user_id: str, comment_data: dict, thumb: List[str]):
         new_comment = Comment(
             commentId=str(uuid.uuid4()),
             commentBy=user_id,
@@ -17,6 +19,7 @@ class CommentRepository:
             reacts=CommentReact(),
             createdAt=datetime.now(timezone.utc),
             statusComment="active",
+            thumbnails=thumb
         ).dict()
 
         result = await CommentRepository.collection.update_one(

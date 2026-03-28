@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 from models.post_model import CommentReact
 
 
-class AddCommentRequest(BaseModel):
+class AddCommentReplyRequest(BaseModel):
     postId: str
+    parentId: Optional[str] = None
+    path: Optional[str] = None
     content: str
-    reacts: Optional[CommentReact] = None
-    createdAt: datetime = datetime.now(timezone.utc)
-    statusComment: str = "active"
+    commentBy: Optional[str] = None
     thumbnails: Optional[List[str]] = None

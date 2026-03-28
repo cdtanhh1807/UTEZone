@@ -37,6 +37,8 @@ class Comment(BaseModel):
     reacts: CommentReact
     createdAt: datetime
     statusComment: str
+    thumbnails: Optional[List[str]] = Field(default_factory=list)
+    thumbnails_url: Optional[List[str]] = Field(default_factory=list)
 
 class Post(BaseModel):  
     id: Optional[PyObjectId] = Field(alias="_id", default=None)

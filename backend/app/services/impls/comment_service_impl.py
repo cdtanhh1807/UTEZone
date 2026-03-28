@@ -1,16 +1,26 @@
 from datetime import datetime, timezone
+import uuid
 from dto.comment.request.add_comment_request import AddCommentRequest
+from dto.comment.request.add_commentreply_request import AddCommentReplyRequest
+from dto.comment.request.get_commentreply_request import GetCommentReplyRequest
+from dto.comment.request.update_status_comment_reply_request import UpdateStatusCommentReplyRequest
 from dto.comment.response.add_comment_response import AddCommentResponse
+from dto.comment.response.add_commentreply_response import AddCommentReplyResponse
+from dto.comment.response.get_commentreply_response import GetCommentReplyResponse
+from dto.comment.response.update_status_comment_reply_response import UpdateStatusCommentReplyResponse
 from models.account_model import Account
 from models.announce_model import Announce
+from models.commentreply_model import CommentReply
 from repositories.account_repository import AccountRepository
 from repositories.announce_repository import AnnounceRepository
+from repositories.commentreply_repository import CommentReplyRepository
 from repositories.post_repository import PostRepository
 from services.interfaces.comment_service_interface import ICommentService
 from repositories.comment_repository import CommentRepository
 from models.post_model import CommentReact, Post
-from typing import Optional
+from typing import List, Optional
 from models.base_model import bson_to_dict
+from services.other.file_service import FileService
 
 class CommentServiceImpl(ICommentService):
 
@@ -18,7 +28,8 @@ class CommentServiceImpl(ICommentService):
         new_comment = await CommentRepository.add_comment(
             post_id=post_req.postId,
             user_id=user_id,
-            comment_data=post_req.model_dump()
+            comment_data=post_req.model_dump(),
+            thumb=post_req.thumbnails
         )
 
         # if new_comment:
@@ -54,3 +65,47 @@ class CommentServiceImpl(ICommentService):
 
     async def find_by_id(self, post_id: str) -> Optional[dict]:
         return await CommentRepository.find_by_id(post_id)
+    
+    async def add_comment_reply(self, comment_req: AddCommentReplyRequest) -> Optional[AddCommentReplyResponse]:
+        commentId=str(uuid.uuid4())
+        path = ""
+        if not comment_req.path: path = comment_req.parentId + ";" + commentId
+        else: path = comment_req.path + ";" + commentId
+
+        commentReply: CommentReply = CommentReply(commentId=commentId, commentBy=comment_req.commentBy, 
+                                                  postId=comment_req.postId, path=path, content=comment_req.content,
+                                                    createdAt=datetime.now(timezone.utc), status="active", thumbnails=comment_req.thumbnails)
+
+        rs = await CommentReplyRepository.insert(commentReply.model_dump())
+        if rs: return AddCommentReplyResponse(commentReply=CommentReply(**bson_to_dict(rs)))
+        return None
+    
+    async def get_comment_reply(self, req: GetCommentReplyRequest) -> Optional[GetCommentReplyResponse]:
+        dic = await CommentReplyRepository.find_by_path(req.postId, req.parentId)
+        rs = GetCommentReplyResponse(commentReplys=[CommentReply(**c) for c in dic if c.get("status") == "active"])
+        for c in rs.commentReplys:
+            if c.thumbnails:
+                c.thumbnails_url = [FileService.get_file_url(file_id) for file_id in c.thumbnails]
+            else:
+                c.thumbnails_url = []
+        return rs
+    
+    async def update_status_comment_reply(self, req: UpdateStatusCommentReplyRequest) -> List[UpdateStatusCommentReplyResponse]:
+        updated_cmts = await CommentReplyRepository.update_comment_status(
+            req.postId, req.commentId, req.path, req.status
+        )
+
+        if updated_cmts:
+            return [
+                UpdateStatusCommentReplyResponse(
+                    commentReply=CommentReply(**bson_to_dict(cmt))
+                )
+                for cmt in updated_cmts
+            ]
+
+        return None
+    
+    async def update_react_comment_reply(self, post_id: str, comment_id: str, react: CommentReact) -> Optional[dict]:
+        updated_comment = await CommentReplyRepository.update_comment_reply_react(post_id, comment_id, react)
+        return bson_to_dict(updated_comment) if updated_comment else None
+

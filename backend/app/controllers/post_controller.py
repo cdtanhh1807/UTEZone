@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from core.redis import get_viewed_posts
+from dto.comment.response.get_commentreply_response import GetCommentReplyResponse
 from dto.post.request.add_post_request import AddPostRequest
 from dto.post.request.get_my_post_request import GetMyPostRequest
 from dto.post.request.get_post_by_email_request import GetPostByEmailRequest
@@ -57,7 +58,9 @@ async def list_posts(
                 c for c in p.comments 
                 if c.statusComment != "hidden"
             ]
-        if p.thumbnails:  # danh sách file_id
+            for tb in p.comments:
+                if tb.thumbnails: tb.thumbnails_url = [FileService.get_file_url(file_id) for file_id in tb.thumbnails]
+        if p.thumbnails:
             p.thumbnails_url = [FileService.get_file_url(file_id) for file_id in p.thumbnails]
         else:
             p.thumbnails_url = []
@@ -76,7 +79,32 @@ async def get_post(
 
     post_dict = post.post.model_dump()
     post_dict["id"] = str(post.post.id)
-    post_dict["comments"] = [comment for comment in post.post.comments if comment.statusComment != "hidden"]
+    ### code cũ
+    # post_dict["comments"] = [comment for comment in post.post.comments if comment.statusComment != "hidden"]
+
+    ### code mới
+    # lọc comment trước
+    filtered_comments = [
+        comment for comment in post.post.comments 
+        if comment.statusComment != "hidden"
+    ]
+    # convert từng comment sang dict + thêm thumbnails_url
+    comments_with_url = []
+    for comment in filtered_comments:
+        comment_dict = comment.model_dump()
+        
+        if comment.thumbnails:
+            comment_dict["thumbnails_url"] = [
+                FileService.get_file_url(file_id) 
+                for file_id in comment.thumbnails
+            ]
+        else:
+            comment_dict["thumbnails_url"] = []
+        
+        comments_with_url.append(comment_dict)
+
+    post_dict["comments"] = comments_with_url
+
     if post.post.thumbnails:
         post_dict["thumbnails_url"] = [FileService.get_file_url(file_id) for file_id in post.post.thumbnails]
     else:
@@ -168,6 +196,11 @@ async def get_post_by_email(
     posts = await service.get_by_email(req)
 
     for p in posts.post_list:
+        ## thumb comment
+        if p.comments:
+            for tb in p.comments:
+                if tb.thumbnails: tb.thumbnails_url = [FileService.get_file_url(file_id) for file_id in tb.thumbnails]
+        ## thumb comment
         if p.thumbnails:
             p.thumbnails_url = [FileService.get_file_url(file_id) for file_id in p.thumbnails]
             print(p.thumbnails_url)
@@ -190,7 +223,9 @@ async def list_posts(
                 c for c in p.comments 
                 if c.statusComment != "hidden"
             ]
-        if p.thumbnails:  # danh sách file_id
+            for tb in p.comments:
+                if tb.thumbnails: tb.thumbnails_url = [FileService.get_file_url(file_id) for file_id in tb.thumbnails]
+        if p.thumbnails:
             p.thumbnails_url = [FileService.get_file_url(file_id) for file_id in p.thumbnails]
         else:
             p.thumbnails_url = []
@@ -251,3 +286,4 @@ async def post_suggest(
     req = GetPostSuggestRequest(email=current_user["sub"])
     rs= await service.get_post_suggest(req)
     return rs
+

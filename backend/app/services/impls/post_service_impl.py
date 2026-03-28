@@ -10,6 +10,7 @@ from dto.statistic.request.get_top_interacted_post_request import GetTopInteract
 from dto.statistic.response.get_post_of_day_response import GetPostOfDayResponse
 from dto.statistic.response.get_top_interacted_post_response import GetTopInteractedPostReponse, TopPost
 from repositories.account_repository import AccountRepository
+from repositories.commentreply_repository import CommentReplyRepository
 from services.interfaces.post_service_interface import IPostService
 from repositories.post_repository import PostRepository
 from dto.post.request.add_post_request import AddPostRequest
@@ -137,10 +138,21 @@ class PostServiceImpl(IPostService):
             return DeletePostResponse(success=False, message="Failed to delete post")
         
     async def update_comment_status(self, post_id: str, comment_id: str, status_comment: str):
+        # updated_post = await PostRepository.update_comment_status(post_id, comment_id, status_comment)
+        # if updated_post:
+        #     return UpdatePostResponse(post=Post(**bson_to_dict(updated_post)))
+        # return None
+
         updated_post = await PostRepository.update_comment_status(post_id, comment_id, status_comment)
-        if updated_post:
-            return UpdatePostResponse(post=Post(**bson_to_dict(updated_post)))
-        return None
+        if not updated_post:
+            return None
+        
+        await CommentReplyRepository.update_comment_status_by_parent(
+            post_id=post_id,
+            parent_comment_id=comment_id,
+            status=status_comment
+        )
+        return UpdatePostResponse(post=Post(**bson_to_dict(updated_post)))
     
 
     async def find_by_id(self, post_id: str):
