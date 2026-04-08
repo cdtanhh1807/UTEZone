@@ -11,6 +11,8 @@ from controllers.websocket_controller import router as websocket_router
 from crawl.importdata.fit_import_router import router as crawl_router
 
 import asyncio  
+from meeting.controllers import meeting_controller
+from meeting.websocket import meeting_websocket
 from utils.permission_watcher import permission_watcher_loop 
 
 @asynccontextmanager
@@ -56,3 +58,10 @@ app.include_router(ai_controller.router, prefix="/ai", tags=["ai"])
 app.include_router(crawl_router, prefix="/crawl", tags=["crawl"])
 # app.add_websocket_route("/ws", websocket_endpoint)
 app.include_router(websocket_router)
+
+
+
+
+#Meeting
+app.include_router(meeting_controller.router)
+app.include_router(meeting_websocket.router)
