@@ -1,7 +1,9 @@
 from dto.post_saved.request.rename_collection_request import RenameCollectionRequest
 from dto.post_saved.response.rename_collection_response import RenameCollectionResponse
 from models.base_model import bson_to_dict
+from models.post_model import Post
 from models.post_saved_model import PostSaved
+from repositories.post_repository import PostRepository
 from repositories.post_saved_repository import PostSavedRepository
 from services.interfaces.post_saved_service_interface import IPostSavedService
 from dto.post_saved.request.add_collection_request import AddCollectionRequest
@@ -49,6 +51,17 @@ class PostSavedServiceImpl(IPostSavedService):
         dic = await PostSavedRepository.find_by_email(req.email)
         if dic:
             rs = PostSaved(**bson_to_dict(dic))
+
+            for c in rs.collections:
+                c.posts = [str(post_id) for post_id in c.posts]
+                active_posts = []
+                for post_id in c.posts:
+                    ps = Post(**bson_to_dict(await PostRepository.find_by_id(post_id))) 
+                    if ps and ps.status == "active": active_posts.append(str(ps.id))
+                rs_posts = []
+                for p in active_posts: rs_posts.append(p)
+                c.posts = rs_posts
+
             return FindByEmailResponse(post_saved=rs)
         return FindByEmailResponse(post_saved=None)
 
