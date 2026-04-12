@@ -1,3 +1,5 @@
+from dto.post_saved.request.rename_collection_request import RenameCollectionRequest
+from dto.post_saved.response.rename_collection_response import RenameCollectionResponse
 from models.base_model import bson_to_dict
 from models.post_saved_model import PostSaved
 from repositories.post_saved_repository import PostSavedRepository
@@ -50,3 +52,9 @@ class PostSavedServiceImpl(IPostSavedService):
             return FindByEmailResponse(post_saved=rs)
         return FindByEmailResponse(post_saved=None)
 
+    async def rename_collection(self, req: RenameCollectionRequest) -> RenameCollectionResponse:
+        dic = await PostSavedRepository.rename_collection(req.email, req.old_name, req.new_name)
+        if "error" in dic:
+            return RenameCollectionResponse(error=dic["error"])
+        rs = PostSaved(**bson_to_dict(dic))
+        return RenameCollectionResponse(post_saved=rs)

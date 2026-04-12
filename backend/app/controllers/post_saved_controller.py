@@ -4,11 +4,13 @@ from dto.post_saved.request.add_post_to_collection_request import AddPostToColle
 from dto.post_saved.request.delete_collection_request import DeleteCollectionRequest
 from dto.post_saved.request.find_by_email_request import FindByEmailRequest
 from dto.post_saved.request.remove_post_from_collection_request import RemovePostFromCollectionRequest
+from dto.post_saved.request.rename_collection_request import RenameCollectionRequest
 from dto.post_saved.response.add_collection_response import AddCollectionResponse
 from dto.post_saved.response.add_post_to_collection_response import AddPostToCollectionResponse
 from dto.post_saved.response.delete_collection_response import DeleteCollectionResponse
 from dto.post_saved.response.find_by_email_response import FindByEmailResponse
 from dto.post_saved.response.remove_post_from_collection_response import RemovePostFromCollectionResponse
+from dto.post_saved.response.rename_collection_response import RenameCollectionResponse
 from services.interfaces.post_saved_service_interface import IPostSavedService
 from core.dependency import get_post_saved_service
 from utils.security import get_current_user
@@ -61,3 +63,11 @@ async def delete_collection(
     req.email = current_user["sub"]
     return await service.delete_collection(req)
 
+@router.post("/rename_collection", response_model=RenameCollectionResponse)
+async def rename_collection(
+    req: RenameCollectionRequest,
+    current_user: dict = Depends(get_current_user),
+    service: IPostSavedService = Depends(get_post_saved_service)
+):
+    req.email = current_user["sub"]
+    return await service.rename_collection(req)

@@ -77,5 +77,5 @@ class IPostService(ABC):
         pass
 
     @abstractmethod
-    async def get_all_post_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
+    async def get_post_hidden_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
         pass

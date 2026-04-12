@@ -577,10 +577,10 @@ class PostRepository:
         return posts
 
     @staticmethod
-    async def find_all_post_by_email(email: str) -> List[Dict]:
+    async def get_post_hidden_by_email(email: str) -> List[Dict]:
         posts = []
 
-        query = {"createdBy": email}                
+        query = {"createdBy": email, "status": "off"}    
 
         async for post in (
             PostRepository.collection

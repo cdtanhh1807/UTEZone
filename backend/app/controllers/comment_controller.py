@@ -78,7 +78,7 @@ async def add_comment(
     request.commentBy = current_user.get("sub")
     return await service.add_comment_reply(request)
 
-@router.get("/get_comment_reply", response_model=GetCommentReplyResponse)
+@router.post("/get_comment_reply", response_model=GetCommentReplyResponse)
 async def get_comment_reply(
     request: GetCommentReplyRequest,
     current_user: dict = Depends(get_current_user),

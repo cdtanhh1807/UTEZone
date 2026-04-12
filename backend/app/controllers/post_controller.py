@@ -287,12 +287,12 @@ async def post_suggest(
     rs= await service.get_post_suggest(req)
     return rs
 
-@router.get("/get_all_post_by_email", response_model=GetAllPostResponse)
-async def get_all_post_by_email(
+@router.get("/get_post_hidden_by_email", response_model=GetAllPostResponse)
+async def get_post_hidden_by_email(
     current_user: dict = Depends(get_current_user),
     service: IPostService = Depends(get_post_service)
 ):
     req = GetMyPostRequest(email=current_user["sub"])
-    posts = await service.get_all_post_by_email(req)
+    posts = await service.get_post_hidden_by_email(req)
     return posts
 

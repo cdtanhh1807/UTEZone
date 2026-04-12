@@ -6,11 +6,13 @@ from dto.post_saved.request.add_post_to_collection_request import AddPostToColle
 from dto.post_saved.request.delete_collection_request import DeleteCollectionRequest
 from dto.post_saved.request.find_by_email_request import FindByEmailRequest
 from dto.post_saved.request.remove_post_from_collection_request import RemovePostFromCollectionRequest
+from dto.post_saved.request.rename_collection_request import RenameCollectionRequest
 from dto.post_saved.response.add_collection_response import AddCollectionResponse
 from dto.post_saved.response.add_post_to_collection_response import AddPostToCollectionResponse
 from dto.post_saved.response.delete_collection_response import DeleteCollectionResponse
 from dto.post_saved.response.find_by_email_response import FindByEmailResponse
 from dto.post_saved.response.remove_post_from_collection_response import RemovePostFromCollectionResponse
+from dto.post_saved.response.rename_collection_response import RenameCollectionResponse
 
 class IPostSavedService(ABC):
 
@@ -32,4 +34,8 @@ class IPostSavedService(ABC):
 
     @abstractmethod
     async def find_by_email(self, req: FindByEmailRequest) -> FindByEmailResponse:
+        pass
+
+    @abstractmethod
+    async def rename_collection(self, req: RenameCollectionRequest) -> RenameCollectionResponse:
         pass

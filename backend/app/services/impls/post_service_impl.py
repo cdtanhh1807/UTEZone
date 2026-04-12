@@ -210,8 +210,8 @@ class PostServiceImpl(IPostService):
         rs = GetPostSuggestResponse(list_post=pl)
         return rs
 
-    async def get_all_post_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
-        dic = await PostRepository.find_all_post_by_email(req.email)
+    async def get_post_hidden_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
+        dic = await PostRepository.get_post_hidden_by_email(req.email)
         rs = GetAllPostResponse(post_list=[Post(**bson_to_dict(p)) for p in dic])
         for p in rs.post_list:
             if p.thumbnails:

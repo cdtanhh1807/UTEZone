@@ -81,3 +81,28 @@ class PostSavedRepository:
             return None
 
         return await PostSavedRepository.find_by_email(email)
+    
+    @staticmethod
+    async def rename_collection(email: str, old_name: str, new_name: str) -> dict | None:
+        existing_user = await PostSavedRepository.find_by_email(email)
+        if existing_user:
+            for collection in existing_user.get('collections', []):
+                if collection['name'] == new_name:
+                    return {"error": "Tên collection mới đã tồn tại!"}
+
+        result = await PostSavedRepository.collection.update_one(
+            {
+                "email": email,
+                "collections.name": old_name
+            },
+            {
+                "$set": {
+                    "collections.$.name": new_name
+                }
+            }
+        )
+
+        if result.modified_count == 0:
+            return {"error": "Không tìm thấy collection!"}
+
+        return await PostSavedRepository.find_by_email(email)
