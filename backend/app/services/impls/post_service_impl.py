@@ -32,6 +32,7 @@ from core.redis import (
     get_cached_feed, cache_feed,
     get_viewed_posts, mark_post_viewed, invalidate_feed_cache
 )
+from services.other.file_service import FileService
 MAX_TAKE = 1000
 
 
@@ -209,6 +210,20 @@ class PostServiceImpl(IPostService):
         rs = GetPostSuggestResponse(list_post=pl)
         return rs
 
+    async def get_all_post_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
+        dic = await PostRepository.find_all_post_by_email(req.email)
+        rs = GetAllPostResponse(post_list=[Post(**bson_to_dict(p)) for p in dic])
+        for p in rs.post_list:
+            if p.thumbnails:
+                p.thumbnails_url = [FileService.get_file_url(file_id) for file_id in p.thumbnails]
+            else:
+                p.thumbnails_url = []
+            
+            if p.comments:
+                p.comments = [
+                    c for c in p.comments if c.statusComment != "hidden"
+                ]
+        return rs
 
 
 

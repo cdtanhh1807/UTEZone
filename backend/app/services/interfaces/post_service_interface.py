@@ -75,3 +75,7 @@ class IPostService(ABC):
     @abstractmethod
     async def get_post_suggest(self, req: GetPostSuggestRequest) -> GetPostSuggestResponse:
         pass
+
+    @abstractmethod
+    async def get_all_post_by_email(self, req: GetMyPostRequest) -> GetAllPostResponse:
+        pass

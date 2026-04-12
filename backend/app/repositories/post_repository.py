@@ -112,11 +112,11 @@ class PostRepository:
                 }
             },
             {"$unwind": "$author_info"},
-            # --- Mutual block: loại bỏ nếu author block bạn ---
+            # Mutual block: loại bỏ nếu author block bạn
             {"$match": {
                 "$expr": {"$not": {"$in": [email, {"$ifNull": ["$author_info.userInfo.blocks", []]}]}}
             }},
-            # --- Tính hotScore, finalScore như cũ ---
+            # Tính hotScore, finalScorez
             {"$addFields": {
                 "hotScore": {
                     "$add": [
@@ -576,4 +576,16 @@ class PostRepository:
 
         return posts
 
-    
+    @staticmethod
+    async def find_all_post_by_email(email: str) -> List[Dict]:
+        posts = []
+
+        query = {"createdBy": email}                
+
+        async for post in (
+            PostRepository.collection
+            .find(query)
+            .sort("createdAt", -1)
+        ):
+            posts.append(post)
+        return posts

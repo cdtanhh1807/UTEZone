@@ -5,6 +5,7 @@ from services.impls.comment_service_impl import CommentServiceImpl
 from services.impls.complaint_service_impl import ComplaintServiceImpl
 from services.impls.message_service_impl import MessageServiceImpl
 from services.impls.policy_service_impl import PolicyServiceImpl
+from services.impls.post_saved_service_impl import PostSavedServiceImpl
 from services.impls.report_service_impl import ReportServiceImpl
 from services.impls.search_service_impl import SearchServiceImpl
 from services.impls.story_service_impl import StoryServiceImpl
@@ -15,6 +16,7 @@ from services.interfaces.comment_service_interface import ICommentService
 from services.interfaces.complaint_service_interface import IComplaintService
 from services.interfaces.message_service_interface import IMessageService
 from services.interfaces.policy_service_interface import IPolicyService
+from services.interfaces.post_saved_service_interface import IPostSavedService
 from services.interfaces.post_service_interface import IPostService
 from services.impls.post_service_impl import PostServiceImpl
 from services.interfaces.account_service_interface import IAccountService
@@ -58,3 +60,6 @@ def get_announce_service() -> IAnnounceService:
 
 def get_ai_service() -> IAIService:
     return AIServiceImpl()
+
+def get_post_saved_service() -> IPostSavedService:
+    return PostSavedServiceImpl()

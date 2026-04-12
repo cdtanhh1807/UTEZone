@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from controllers import ai_controller, announce_controller, ban_controller, comment_controller, complaint_controller, message_controller, policy_controller, post_controller, report_controller, search_controller, story_controller
+from controllers import ai_controller, announce_controller, ban_controller, comment_controller, complaint_controller, message_controller, policy_controller, post_controller, post_saved_controller, report_controller, search_controller, story_controller
 from controllers import account_controller
 from core.database import init_db 
 from controllers import file_controller
@@ -59,7 +59,7 @@ app.include_router(crawl_router, prefix="/crawl", tags=["crawl"])
 # app.add_websocket_route("/ws", websocket_endpoint)
 app.include_router(websocket_router)
 
-
+app.include_router(post_saved_controller.router, prefix="/post_saved", tags=["post_saved"])
 
 
 #Meeting
