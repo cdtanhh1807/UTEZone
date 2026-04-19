@@ -29,12 +29,15 @@ function Login() {
     password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false); // 👁 toggle password
-
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const navigate = useNavigate();
+
+  // ✅ Lấy redirect URL nếu có
+  const params = new URLSearchParams(window.location.search);
+  const redirectUrl = params.get("redirect");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,7 +80,14 @@ function Login() {
         return;
       }
 
-      // ✅ lưu token
+      // 🔥 Nếu có redirect → quay về hệ thống gọi login
+      if (redirectUrl) {
+        const separator = redirectUrl.includes("?") ? "&" : "?";
+        window.location.href = `${redirectUrl}${separator}token=${token}`;
+        return;
+      }
+
+      // ✅ lưu token (chỉ khi login nội bộ)
       localStorage.setItem("token", token);
 
       // 🟥 Admin
@@ -127,7 +137,6 @@ function Login() {
         <img src={logo} alt="Logo" className="login-utezone-image" />
 
         <form onSubmit={handleSubmit}>
-
           <input
             type="text"
             name="username"
@@ -137,7 +146,6 @@ function Login() {
             required
           />
 
-          {/* PASSWORD INPUT */}
           <div className="password-wrapper">
             <input
               type={showPassword ? "text" : "password"}
@@ -183,7 +191,6 @@ function Login() {
               </p>
             </div>
           </div>
-
         </form>
       </div>
     </div>

@@ -12,6 +12,7 @@ from crawl.importdata.fit_import_router import router as crawl_router
 
 import asyncio  
 from meeting.controllers import meeting_controller
+from meeting.controllers import channel_controller
 from meeting.websocket import meeting_websocket
 from utils.permission_watcher import permission_watcher_loop 
 
@@ -65,3 +66,6 @@ app.include_router(post_saved_controller.router, prefix="/post_saved", tags=["po
 #Meeting
 app.include_router(meeting_controller.router)
 app.include_router(meeting_websocket.router)
+
+#Channel
+app.include_router(channel_controller.router)

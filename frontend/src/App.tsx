@@ -15,7 +15,8 @@ import ForgotPassword from "./components/content/auth/forgotpassword/ForgotPassw
 import OtpForgotPassword from "./components/content/auth/forgotpassword/OtpForgotPassword";
 
 // ----- USER / MOD -----
-import Home from "./components/content/user/home/Home";
+import Home from "./components/content/user/home/home"
+// import Home from "./components/content/user/home/Home";
 import Profile from "./components/content/user/profile/profile";
 import CompleteProfile from "./components/content/user/profile/completeProfile";
 import UserLayout from "./UserLayout";
@@ -71,6 +72,18 @@ const GuestGuard = ({ children }: { children: JSX.Element }) => {
   const auth = getAuthInfo();
 
   if (!auth) return children;
+
+  // If redirect param exists, send token back to the calling app
+  const params = new URLSearchParams(window.location.search);
+  const redirectUrl = params.get("redirect");
+  if (redirectUrl) {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const separator = redirectUrl.includes("?") ? "&" : "?";
+      window.location.href = `${redirectUrl}${separator}token=${token}`;
+      return <></>;
+    }
+  }
 
   if (auth.role === "Administrator") {
     return <Navigate to="/admin" replace />;

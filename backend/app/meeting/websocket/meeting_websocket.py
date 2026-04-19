@@ -1,9 +1,3 @@
-
-
-
-
-
-
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from meeting.websocket.meeting_manager import meeting_manager
