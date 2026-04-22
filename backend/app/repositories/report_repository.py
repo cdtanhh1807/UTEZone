@@ -196,6 +196,15 @@ class ReportRepository:
         }):
             reports.append(report)
         return reports
+    
+    @staticmethod
+    async def find_report_with_violator(email: str) -> list[dict]:
+        reports = []
+        async for report in ReportRepository.collection.find({
+            "violatorEmail": email
+        }):
+            reports.append(report)
+        return reports
 
 
 

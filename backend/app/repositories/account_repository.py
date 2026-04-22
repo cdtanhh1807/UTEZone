@@ -221,7 +221,125 @@ class AccountRepository:
             accounts.append(account)
         return accounts
 
-    
 
+    post_collection = db["post"]
+    @staticmethod
+    async def find_top_suggestions(
+        current_user_email: str,
+        current_department: Optional[str],
+        limit: int
+    ) -> list[dict]:
+        if not current_department:
+            return []
 
+        # ====== BƯỚC 1: Interaction score ======
+        posts_pipeline = [
+            {
+                "$match": {
+                    "createdBy": {"$exists": True, "$ne": None},
+                    "status": "active"
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$createdBy",
+                    "posts_count": {"$sum": 1}
+                }
+            }
+        ]
+        
+        posts_count_map = {}
+        async for doc in AccountRepository.post_collection.aggregate(posts_pipeline):
+            if doc.get("_id"):
+                posts_count_map[doc["_id"]] = doc.get("posts_count", 0)
 
+        comments_pipeline = [
+            {
+                "$match": {
+                    "comments": {"$exists": True, "$ne": []},
+                    "status": "active"
+                }
+            },
+            {"$unwind": "$comments"},
+            {
+                "$match": {
+                    "comments.commentBy": {"$exists": True, "$ne": None}
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$comments.commentBy",
+                    "comments_count": {"$sum": 1}
+                }
+            }
+        ]
+        
+        comments_count_map = {}
+        async for doc in AccountRepository.post_collection.aggregate(comments_pipeline):
+            if doc.get("_id"):
+                comments_count_map[doc["_id"]] = doc.get("comments_count", 0)
+
+        # Merge score
+        all_emails = set(posts_count_map.keys()) | set(comments_count_map.keys())
+        interaction_scores = {}
+
+        for email in all_emails:
+            posts = posts_count_map.get(email, 0)
+            comments = comments_count_map.get(email, 0)
+            interaction_scores[email] = {
+                "posts": posts,
+                "comments": comments,
+                "score": posts + comments
+            }
+
+        # ====== BƯỚC 2 ======
+        current_user_doc = await AccountRepository.collection.find_one(
+            {"email": current_user_email}
+        )
+
+        exclude_emails = {current_user_email}
+
+        if current_user_doc and current_user_doc.get("userInfo", {}).get("followed"):
+            followed_list = current_user_doc["userInfo"]["followed"]
+            if isinstance(followed_list, list):
+                exclude_emails.update(followed_list)
+
+        # ====== BƯỚC 3 ======
+        match_conditions = {
+            "hidden": {"$exists": False},
+            "status": "active",
+            "userInfo.department": current_department,
+            "email": {
+                "$ne": current_user_email,
+                "$nin": list(exclude_emails)
+            }
+        }
+
+        if len(exclude_emails) <= 1:
+            match_conditions["email"] = {"$ne": current_user_email}
+
+        accounts = []
+        async for account in AccountRepository.collection.find(match_conditions):
+            email = account.get("email")
+            interaction = interaction_scores.get(email, {
+                "posts": 0,
+                "comments": 0,
+                "score": 0
+            })
+
+            account["_interaction_score"] = interaction["score"]
+            account["_posts_count"] = interaction["posts"]
+            account["_comments_count"] = interaction["comments"]
+            accounts.append(account)
+
+        # ====== BƯỚC 4 ======
+        accounts.sort(
+            key=lambda x: (
+                -x["_interaction_score"],
+                x.get("userInfo", {}).get("fullName", "") or ""
+            )
+        )
+
+        result = accounts[:limit]
+
+        return result

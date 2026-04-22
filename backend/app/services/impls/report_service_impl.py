@@ -10,6 +10,7 @@ from dto.report.request.ban_report_request import BanReportRequest
 from dto.report.request.get_all_history_approve_request import GetAllHistoryApproveRequest
 from dto.report.request.get_all_report_request import GetAllReportRequest
 from dto.report.request.get_my_report_request import GetMyReportRequest
+from dto.report.request.get_report_me_request import GetReportMeRequest
 from dto.report.request.reject_report_request import RejectReportRequest
 from dto.report.request.send_report_request import SendReportRequest
 from dto.report.request.update_report_request import UpdateReportRequest
@@ -18,6 +19,7 @@ from dto.report.response.ban_report_response import BanReportResponse
 from dto.report.response.get_all_history_approve_reponse import GetAllHistoryApproveResponse
 from dto.report.response.get_all_report_response import GetAllReportResponse, GetAllReport, Annunciator
 from dto.report.response.get_my_report_response import GetMyReportResponse
+from dto.report.response.get_report_me_response import GetReportMeResponse
 from dto.report.response.reject_report_response import RejectReportResponse
 from dto.report.response.send_report_response import SendReportResponse
 from dto.report.response.update_report_response import UpdateReportResponse
@@ -524,6 +526,17 @@ class ReportServiceImpl(IReportService):
             acc_if: Account = await acc_service.get_account_by_email(dic["violatorEmail"])
             dic["violatorName"] = acc_if.userInfo.fullName
             rp: GetMyReportResponse = GetMyReportResponse(**bson_to_dict(dic))
+            rs.append(rp)
+        return rs
+    
+    async def get_report_me(self, req: GetReportMeRequest) -> List[GetReportMeResponse]:
+        dic_list = await ReportRepository.find_report_with_violator(req.email)
+        rs: List[GetReportMeResponse] = []
+        for dic in dic_list:
+            acc_service = AccountServiceImpl()
+            acc_if: Account = await acc_service.get_account_by_email(dic["annunciatorEmail"])
+            dic["annunciatorName"] = acc_if.userInfo.fullName
+            rp: GetReportMeResponse = GetReportMeResponse(**bson_to_dict(dic))
             rs.append(rp)
         return rs
         

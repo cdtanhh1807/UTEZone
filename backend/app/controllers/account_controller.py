@@ -5,6 +5,7 @@ from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
 from dto.account.request.get_mod_request import GetModRequest
 from dto.account.request.get_relation_request import GetRelationRequest
+from dto.account.request.suggest_follow_request import SuggestFollowRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.request.update_account_t_request import UpdateAccountTRequest
 from dto.account.response.account_info_response import AccountInfoResponse
@@ -12,6 +13,7 @@ from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
 from dto.account.response.get_mod_response import GetModResponse
 from dto.account.response.get_relation_response import GetRelationResponse
+from dto.account.response.suggest_follow_response import SuggestFollowResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from dto.account.response.update_account_t_response import UpdateAccountTResponse
 from repositories.account_repository import AccountRepository
@@ -240,3 +242,13 @@ async def get_mod(
 ):  
     req = GetModRequest()
     return await service.get_mod(req)
+
+@router.get("/suggest_follow", response_model=SuggestFollowResponse)
+async def suggest_follow(
+    # limit: int = Query(default=20, ge=1, le=50),
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
+    service: IAccountService = Depends(get_account_service)
+):
+    req = SuggestFollowRequest(email=current_user["sub"], limit=limit)
+    return await service.get_suggest_follow(req)

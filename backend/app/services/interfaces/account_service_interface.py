@@ -6,12 +6,14 @@ from dto.account.request.get_mod_request import GetModRequest
 from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.google_auth_request import GoogleAuthRequest
 from dto.account.request.register_user_request import RegisterUserRequest
+from dto.account.request.suggest_follow_request import SuggestFollowRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
 from dto.account.response.get_mod_response import GetModResponse
 from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.register_user_response import RegisterUserResponse
+from dto.account.response.suggest_follow_response import SuggestFollowResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from dto.auth.request.otp_request import OTPRequest
 from dto.auth.response.otp_response import OTPResponse
@@ -91,4 +93,8 @@ class IAccountService(ABC):
 
     @abstractmethod
     async def get_mod(self, account_list: GetModRequest) -> Optional[GetModResponse]:
+        pass
+
+    @abstractmethod
+    async def get_suggest_follow(self, req: SuggestFollowRequest) -> SuggestFollowResponse:
         pass

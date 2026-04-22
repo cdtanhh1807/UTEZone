@@ -12,12 +12,14 @@ from dto.account.request.get_mod_request import GetModRequest
 from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.google_auth_request import GoogleAuthRequest
 from dto.account.request.register_user_request import RegisterUserRequest
+from dto.account.request.suggest_follow_request import SuggestFollowRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
 from dto.account.response.get_mod_response import GetModResponse
 from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.register_user_response import RegisterUserResponse
+from dto.account.response.suggest_follow_response import SuggestFollowItem, SuggestFollowResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from models.account_model import Account
 from repositories.account_repository import AccountRepository
@@ -345,3 +347,33 @@ class AccountServiceImpl(IAccountService):
     async def get_mod(self, account_list: GetModRequest) -> Optional[GetModResponse]:
         accounts = await AccountRepository.find_mod()
         return GetModResponse(account_list=[Account(**bson_to_dict(account)) for account in accounts])
+    
+    async def get_suggest_follow(self, req: SuggestFollowRequest) -> SuggestFollowResponse:
+        acc: Account = await self.get_account_by_email(req.email)
+
+        if not acc.userInfo.department:
+            return SuggestFollowResponse(suggestions=[])
+
+        suggestions = await AccountRepository.find_top_suggestions(
+            current_user_email=req.email,
+            current_department=acc.userInfo.department,
+            limit=req.limit
+        )
+
+        suggestion_items = []
+        for account in suggestions:
+            user_info = account.get("userInfo", {})
+            
+            suggestion_items.append(SuggestFollowItem(
+                id=str(account.get("_id")),
+                email=account.get("email"),
+                fullName=user_info.get("fullName"),
+                department=user_info.get("department"),
+                avatar=user_info.get("avatar"),
+                description=user_info.get("description"),
+                interaction_score=account.get("_interaction_score", 0),
+                posts_count=account.get("_posts_count", 0),
+                comments_count=account.get("_comments_count", 0)
+            ))
+
+        return SuggestFollowResponse(suggestions=suggestion_items)
