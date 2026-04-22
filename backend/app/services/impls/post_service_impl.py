@@ -30,10 +30,10 @@ from core.database import db
 from repositories.interaction_repository import InteractionRepository
 from core.redis import (
     get_cached_feed, cache_feed,
-    get_viewed_posts, mark_post_viewed, invalidate_feed_cache
+    get_viewed_posts, mark_post_viewed, invalidate_feed_cache, reset_viewed_posts
 )
 from services.other.file_service import FileService
-MAX_TAKE = 1000
+MAX_TAKE = 20
 
 
 class PostServiceImpl(IPostService):
@@ -46,18 +46,140 @@ class PostServiceImpl(IPostService):
             return AddPostResponse(success=False, message="Failed to add post")
 
 
+    # async def get_all(self, req: GetAllPostRequest) -> Optional[GetAllPostResponse]:
+    #     uid = req.email
+    #     dic_acc = await AccountRepository.find_by_email(uid)
+    #     # 1. Cache
+    #     # cached = await get_cached_feed(uid)
+    #     # if cached:
+    #     #     return GetAllPostResponse(post_list=[Post(**d) for d in cached])
+
+    #     # 2. Đã xem
+    #     viewed = await get_viewed_posts(uid)
+
+    #     # 3. Follow & department
+    #     me = await db["account"].find_one(
+    #         {"email": uid},
+    #         {"userInfo.followed": 1, "userInfo.department": 1}
+    #     )
+    #     followed = me.get("userInfo", {}).get("followed", [])
+    #     user_dept = me.get("userInfo", {}).get("department")
+
+    #     # 4. Interacted
+    #     interacted = await InteractionRepository(db).get_interacted_emails(uid)
+    #     interacted = list(interacted - set(followed))
+        
+    #     # 5. Lấy hết bài chưa xem (không giới hạn)
+    #     new_docs = await PostRepository.get_ranked_posts(
+    #         email=uid,
+    #         followed=followed,
+    #         interacted=interacted,
+    #         user_dept=user_dept,
+    #         exclude_ids=list(viewed),
+    #         limit=None,
+    #         myAccount=dic_acc
+    #     )
+
+    #     # 6. Refill bài đã xem đến MAX_TAKE (kể cả 0)
+    #     needed = 300 - len(new_docs)          # có thể = 0
+    #     old_docs = []
+    #     if needed > 0:       
+    #         total_valid = await db["post"].count_documents({"visibility": "public", "status": "active"})
+    #         old_docs = await PostRepository.get_ranked_posts(
+    #             email=uid,
+    #             followed=followed,
+    #             interacted=interacted,
+    #             user_dept=user_dept,
+    #             exclude_ids=[],
+    #             limit=needed,
+    #             myAccount=dic_acc
+    #         )
+    #         seen_ids = {str(d["_id"]) for d in new_docs}
+    #         old_docs = [d for d in old_docs if str(d["_id"]) not in seen_ids]
+
+    #     # 7. Ghép & giữ thứ tự ưu tiên
+    #     docs = (new_docs + old_docs)[:MAX_TAKE]
+
+    #     # 8. Cache & mark viewed
+    #     serializable = [bson_to_dict(d) for d in docs]
+    #     await cache_feed(uid, serializable)
+    #     for d in docs:
+    #         await mark_post_viewed(uid, str(d["_id"]))
+    #     return GetAllPostResponse(post_list=[Post(**d) for d in docs])
+    # async def get_all(self, req: GetAllPostRequest) -> Optional[GetAllPostResponse]:
+    #     uid = req.email
+    #     dic_acc = await AccountRepository.find_by_email(uid)
+
+    #     # 1. Cache - TẮT KHI DEV
+    #     # cached = await get_cached_feed(uid)
+    #     # if cached:
+    #     #     return GetAllPostResponse(post_list=[Post(**d) for d in cached])
+
+    #     # 2. Đã xem
+    #     viewed = await get_viewed_posts(uid)
+
+    #     # 3. Follow & department
+    #     me = await db["account"].find_one(
+    #         {"email": uid},
+    #         {"userInfo.followed": 1, "userInfo.department": 1}
+    #     )
+    #     followed = me.get("userInfo", {}).get("followed", [])
+    #     user_dept = me.get("userInfo", {}).get("department")
+
+    #     # 4. Interacted
+    #     interacted = await InteractionRepository(db).get_interacted_emails(uid)
+    #     interacted = list(interacted - set(followed))
+
+    #     # 5. Lấy bài chưa xem, giới hạn MAX_TAKE
+    #     new_docs = await PostRepository.get_ranked_posts(
+    #         email=uid,
+    #         followed=followed,
+    #         interacted=interacted,
+    #         user_dept=user_dept,
+    #         exclude_ids=list(viewed),   # exclude đúng bài đã xem
+    #         limit=MAX_TAKE,
+    #         myAccount=dic_acc
+    #     )
+
+    #     # 6. Refill bài đã xem nếu chưa đủ MAX_TAKE
+    #     needed = MAX_TAKE - len(new_docs)
+    #     old_docs = []
+    #     if needed > 0 and len(viewed) > 0:
+    #         seen_new_ids = {str(d["_id"]) for d in new_docs}
+    #         old_docs = await PostRepository.get_ranked_posts(
+    #             email=uid,
+    #             followed=followed,
+    #             interacted=interacted,
+    #             user_dept=user_dept,
+    #             exclude_ids=list(seen_new_ids),  # chỉ exclude bài vừa lấy, không exclude viewed
+    #             limit=needed,
+    #             myAccount=dic_acc
+    #         )
+
+    #     # 7. Ghép & giữ thứ tự ưu tiên
+    #     docs = (new_docs + old_docs)[:MAX_TAKE]
+
+    #     # 8. Cache & mark viewed - TẮT KHI DEV
+    #     # serializable = [bson_to_dict(d) for d in docs]
+    #     # await cache_feed(uid, serializable)
+    #     # for d in docs:
+    #     #     await mark_post_viewed(uid, str(d["_id"]))
+
+    #     def normalize_doc(d: dict) -> dict:
+    #         d = dict(d)
+    #         if "_id" in d and not isinstance(d["_id"], str):
+    #             d["_id"] = str(d["_id"])
+    #         return d
+
+    #     return GetAllPostResponse(post_list=[Post(**normalize_doc(d)) for d in docs])
     async def get_all(self, req: GetAllPostRequest) -> Optional[GetAllPostResponse]:
         uid = req.email
         dic_acc = await AccountRepository.find_by_email(uid)
-        # 1. Cache
-        # cached = await get_cached_feed(uid)
-        # if cached:
-        #     return GetAllPostResponse(post_list=[Post(**d) for d in cached])
 
-        # 2. Đã xem
+        # 1. Lấy danh sách bài đã xem từ Redis
         viewed = await get_viewed_posts(uid)
 
-        # 3. Follow & department
+        # 2. Follow & department
         me = await db["account"].find_one(
             {"email": uid},
             {"userInfo.followed": 1, "userInfo.department": 1}
@@ -65,56 +187,52 @@ class PostServiceImpl(IPostService):
         followed = me.get("userInfo", {}).get("followed", [])
         user_dept = me.get("userInfo", {}).get("department")
 
-        # 4. Interacted
+        # 3. Interacted
         interacted = await InteractionRepository(db).get_interacted_emails(uid)
         interacted = list(interacted - set(followed))
-        
-        # 5. Lấy hết bài chưa xem (không giới hạn)
+
+        # 4. Lấy bài chưa xem, giới hạn MAX_TAKE
         new_docs = await PostRepository.get_ranked_posts(
             email=uid,
             followed=followed,
             interacted=interacted,
             user_dept=user_dept,
             exclude_ids=list(viewed),
-            limit=None,
+            limit=MAX_TAKE,
             myAccount=dic_acc
         )
 
-        # 6. Refill bài đã xem đến MAX_TAKE (kể cả 0)
-        needed = 300 - len(new_docs)          # có thể = 0
-        old_docs = []
-        if needed > 0:       
-            total_valid = await db["post"].count_documents({"visibility": "public", "status": "active"})
-            # print(f"[SRV] total valid posts = {total_valid}")
+        # 5. Refill bằng bài đã xem nếu không còn đủ bài mới
+        docs = new_docs
+        if len(new_docs) < MAX_TAKE:
+            needed = MAX_TAKE - len(new_docs)
+            seen_new_ids = {str(d["_id"]) for d in new_docs}
+
+            # Reset viewed vì đã hết bài mới, bắt đầu chu kỳ mới
+            await reset_viewed_posts(uid)
+
             old_docs = await PostRepository.get_ranked_posts(
                 email=uid,
                 followed=followed,
                 interacted=interacted,
                 user_dept=user_dept,
-                exclude_ids=[],
+                exclude_ids=list(seen_new_ids),
                 limit=needed,
                 myAccount=dic_acc
             )
-            seen_ids = {str(d["_id"]) for d in new_docs}
-            old_docs = [d for d in old_docs if str(d["_id"]) not in seen_ids]
+            docs = (new_docs + old_docs)[:MAX_TAKE]
 
-        # 7. Ghép & giữ thứ tự ưu tiên
-        docs = (new_docs + old_docs)[:MAX_TAKE]
-
-        # 8. Cache & mark viewed
-        serializable = [bson_to_dict(d) for d in docs]
-        await cache_feed(uid, serializable)
+        # 6. Đánh dấu các bài vừa trả về là đã xem
         for d in docs:
             await mark_post_viewed(uid, str(d["_id"]))
-        # print("da xem: " + str(viewed))
-        # print(f"[SRV] followed={len(followed)}, interacted={len(interacted)}, dept={user_dept}")
-        # print(f"[SRV] exclude_ids=[] (refill), needed={needed}")
-        # print(f"[DEBUG] new={len(new_docs)}  old={len(old_docs)}  total={len(docs)}")
-        # print(f"viewed count: {len(viewed)}")
-        # print(f"new docs (chưa xem): {len(new_docs)}")
-        # print(f"old docs (đã xem): {len(old_docs)}")
-        # print(f"total return: {len(docs)}")
-        return GetAllPostResponse(post_list=[Post(**d) for d in docs])
+
+        def normalize_doc(d: dict) -> dict:
+            d = dict(d)
+            if "_id" in d and not isinstance(d["_id"], str):
+                d["_id"] = str(d["_id"])
+            return d
+
+        return GetAllPostResponse(post_list=[Post(**normalize_doc(d)) for d in docs])
 
 
     async def get_by_id(self, post_id: GetPostRequest) -> Optional[GetPostResponse]:

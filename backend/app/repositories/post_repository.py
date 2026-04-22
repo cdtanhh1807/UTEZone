@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 from core.database import db
 from bson import ObjectId
+import re
+from rapidfuzz import fuzz
 
 from models.post_model import React
 from repositories.account_repository import AccountRepository
@@ -38,10 +40,6 @@ class PostRepository:
         )
         return await PostRepository.find_by_id(post_id)
 
-    # @staticmethod
-    # async def delete(post_id: str) -> bool:
-    #     result = await PostRepository.collection.delete_one({"_id": ObjectId(post_id)})
-    #     return result.deleted_count > 0
     @staticmethod
     async def delete(post_id: str) -> bool:
         result = await PostRepository.collection.update_one(
@@ -63,6 +61,109 @@ class PostRepository:
         updated_post = await PostRepository.find_by_id(post_id)
         return updated_post
     
+    # @staticmethod
+    # async def get_ranked_posts(
+    #     email: str,
+    #     followed: List[str],
+    #     interacted: List[str],
+    #     user_dept: Optional[str],
+    #     exclude_ids: List[str],
+    #     limit: int,
+    #     myAccount: dict
+    # ) -> List[dict]:
+    #     from bson import ObjectId
+    #     from datetime import datetime, timezone, timedelta
+
+    #     now = datetime.now(timezone.utc)
+    #     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    #     today_end = today_start + timedelta(days=1)
+
+    #     my_blocks = myAccount["userInfo"].get("blocks", [])
+    #     # my_followers = set(myAccount["userInfo"].get("followers", []))
+    #     my_followed = set(myAccount["userInfo"].get("followed", []))
+    #     # mutual_follow = list(my_followers.intersection(my_followed))
+    #     mutual_follow = list(my_followed)
+
+    #     # --- 1. Match stage: public hoặc follow mutual + loại post blocked ---
+    #     match_stage = {
+    #         "status": "active",
+    #         "$or": [
+    #             # public nhưng không nằm trong blocks
+    #             {"visibility": "public", "createdBy": {"$nin": my_blocks}},
+    #             # follow nhưng author nằm trong mutual_follow
+    #             {"visibility": "follow", "createdBy": {"$in": mutual_follow}}
+    #         ]
+    #     }
+    #     if exclude_ids:
+    #         match_stage["_id"] = {"$nin": [ObjectId(pid) for pid in exclude_ids]}
+
+    #     # --- 2. Pipeline ---
+    #     pipeline = [
+    #         {"$match": match_stage},
+    #         # --- Lookup để lấy thông tin blocks của author ---
+    #         {
+    #             "$lookup": {
+    #                 "from": "account",
+    #                 "localField": "createdBy",
+    #                 "foreignField": "email",
+    #                 "as": "author_info"
+    #             }
+    #         },
+    #         {"$unwind": "$author_info"},
+    #         # Mutual block: loại bỏ nếu author block bạn
+    #         {"$match": {
+    #             "$expr": {"$not": {"$in": [email, {"$ifNull": ["$author_info.userInfo.blocks", []]}]}}
+    #         }},
+    #         # Tính hotScore, finalScorez
+    #         {"$addFields": {
+    #             "hotScore": {
+    #                 "$add": [
+    #                     {"$size": {"$ifNull": ["$react.love", []]}},
+    #                     {"$multiply": [1.5, {"$size": {"$ifNull": ["$react.like", []]}}]},
+    #                     {"$multiply": [1.2, {"$size": {"$ifNull": ["$react.haha", []]}}]},
+    #                     {"$multiply": [1.2, {"$size": {"$ifNull": ["$react.wow", []]}}]},
+    #                     {"$multiply": [0.8, {"$size": {"$ifNull": ["$react.sad", []]}}]},
+    #                     {"$multiply": [0.5, {"$size": {"$ifNull": ["$react.angry", []]}}]},
+    #                     {"$size": {"$ifNull": ["$comments", []]}}
+    #                 ]
+    #             },
+    #             "isMyPostToday": {
+    #                 "$and": [
+    #                     {"$eq": ["$createdBy", email]},
+    #                     {"$gte": ["$createdAt", today_start]},
+    #                     {"$lt": ["$createdAt", today_end]}
+    #                 ]
+    #             },
+    #             "isFollowed": {"$in": ["$createdBy", followed]},
+    #             "isInteracted": {"$in": ["$createdBy", interacted]},
+    #             "sameDept": {"$in": [user_dept, {"$ifNull": ["$category", []]}]},
+    #             "ageHours": {"$divide": [{"$subtract": [now, "$createdAt"]}, 3600000]}
+    #         }},
+    #         {"$addFields": {
+    #             "finalScore": {
+    #                 "$add": [
+    #                     {"$cond": ["$isMyPostToday", 1_000_000, 0]},
+    #                     {"$cond": ["$isFollowed", 300, 0]},
+    #                     {"$cond": ["$isInteracted", 200, 0]},
+    #                     {"$cond": ["$sameDept", 100, 0]},
+    #                     "$hotScore",
+    #                     {"$divide": [100, {"$add": ["$ageHours", 4]}]}
+    #                 ]
+    #             }
+    #         }},
+    #         {"$sort": {"finalScore": -1}},
+    #         {"$limit": limit or 10_000},
+    #         {"$project": {
+    #             "finalScore": 0, "hotScore": 0, "isMyPostToday": 0,
+    #             "isFollowed": 0, "isInteracted": 0, "sameDept": 0, "ageHours": 0,
+    #             "author_info": 0
+    #         }}
+    #     ]
+
+    #     print(f"[REPO] pipeline limit = {limit}, exclude_ids = {len(exclude_ids)}")
+    #     result = await PostRepository.collection.aggregate(pipeline).to_list(length=limit)
+    #     print(f"[REPO] returned = {len(result)}")
+    #     return result
     @staticmethod
     async def get_ranked_posts(
         email: str,
@@ -81,18 +182,14 @@ class PostRepository:
         today_end = today_start + timedelta(days=1)
 
         my_blocks = myAccount["userInfo"].get("blocks", [])
-        # my_followers = set(myAccount["userInfo"].get("followers", []))
         my_followed = set(myAccount["userInfo"].get("followed", []))
-        # mutual_follow = list(my_followers.intersection(my_followed))
         mutual_follow = list(my_followed)
 
-        # --- 1. Match stage: public hoặc follow mutual + loại post blocked ---
+        # --- 1. Match stage ---
         match_stage = {
             "status": "active",
             "$or": [
-                # public nhưng không nằm trong blocks
                 {"visibility": "public", "createdBy": {"$nin": my_blocks}},
-                # follow nhưng author nằm trong mutual_follow
                 {"visibility": "follow", "createdBy": {"$in": mutual_follow}}
             ]
         }
@@ -102,7 +199,6 @@ class PostRepository:
         # --- 2. Pipeline ---
         pipeline = [
             {"$match": match_stage},
-            # --- Lookup để lấy thông tin blocks của author ---
             {
                 "$lookup": {
                     "from": "account",
@@ -112,12 +208,12 @@ class PostRepository:
                 }
             },
             {"$unwind": "$author_info"},
-            # Mutual block: loại bỏ nếu author block bạn
             {"$match": {
                 "$expr": {"$not": {"$in": [email, {"$ifNull": ["$author_info.userInfo.blocks", []]}]}}
             }},
-            # Tính hotScore, finalScorez
             {"$addFields": {
+                # tieBreaker random để xáo trộn bài cùng điểm mỗi lần reload
+                "tieBreaker": {"$rand": {}},
                 "hotScore": {
                     "$add": [
                         {"$size": {"$ifNull": ["$react.love", []]}},
@@ -153,18 +249,19 @@ class PostRepository:
                     ]
                 }
             }},
-            {"$sort": {"finalScore": -1}},
+            # Sort finalScore giảm dần, cùng điểm thì random theo tieBreaker
+            {"$sort": {"finalScore": -1, "tieBreaker": 1}},
             {"$limit": limit or 10_000},
             {"$project": {
                 "finalScore": 0, "hotScore": 0, "isMyPostToday": 0,
                 "isFollowed": 0, "isInteracted": 0, "sameDept": 0, "ageHours": 0,
-                "author_info": 0
+                "tieBreaker": 0, "author_info": 0
             }}
         ]
 
-        print(f"[REPO] pipeline limit = {limit}, exclude_ids = {len(exclude_ids)}")
+        # print(f"[REPO] pipeline limit = {limit}, exclude_ids = {len(exclude_ids)}")
         result = await PostRepository.collection.aggregate(pipeline).to_list(length=limit)
-        print(f"[REPO] returned = {len(result)}")
+        # print(f"[REPO] returned = {len(result)}")
         return result
 
 
@@ -182,16 +279,6 @@ class PostRepository:
             )
             return await PostRepository.find_by_id(post_id)
     
-    # @staticmethod
-    # async def find_by_email(email: str, ownerEmail: str) -> list[dict]:
-    #     posts = []
-    #     query = {
-    #         "createdBy": email,
-    #         "status": "active"
-    #     }
-    #     async for post in PostRepository.collection.find(query).sort("createdAt", -1):
-    #         posts.append(post)
-    #     return posts
     @staticmethod
     async def find_by_email(email: str, ownerEmail: str) -> List[Dict]:
         posts = []
@@ -242,6 +329,7 @@ class PostRepository:
 
         return posts
 
+
     # @staticmethod
     # async def find_post_by_keysearch_and_department(
     #     keySearch: str,
@@ -253,10 +341,9 @@ class PostRepository:
 
     #     my_email = myAccount.get("email")
     #     # Lấy danh sách email follow 2 chiều
-    #     # followers = set(myAccount["userInfo"].get("followers", []))
-    #     # followed = set(myAccount["userInfo"].get("followed", []))
-    #     # mutual_follow = list(followers.intersection(followed))
-    #     mutual_follow = set(myAccount["userInfo"].get("followed", []))
+    #     my_followed = set(myAccount["userInfo"].get("followed", []))
+    #     # mutual_follow = list(my_followers.intersection(my_followed))
+    #     mutual_follow = list(my_followed)
 
     #     # Danh sách email bị block bởi tài khoản đang search
     #     my_blocks = myAccount["userInfo"].get("blocks", [])
@@ -290,14 +377,6 @@ class PostRepository:
     #         }
     #         for part in parts if len(part) >= 2
     #     ]
-
-    #     if not regex_conditions:
-    #         regex_conditions = [{
-    #             "$or": [
-    #                 {"title": {"$regex": ".*"}},
-    #                 {"content": {"$regex": ".*"}},
-    #             ]
-    #         }]
 
     #     # 3. Query các post ứng viên theo regex + visibility
     #     cursor = PostRepository.collection.find({
@@ -336,131 +415,124 @@ class PostRepository:
     #         matched.sort(key=lambda p: p.get("createdAt"), reverse=True)
     #         return matched
 
-    #     # 5. Fallback: lấy post theo department
-    #     acc_cursor = AccountRepository.collection.find(
-    #         {
-    #             "role": {"$in": ["User", "Moderator"]},
-    #             "userInfo.department": department
-    #         },
-    #         {"email": 1}
-    #     )
+    #     # Nếu không có bài viết nào phù hợp với keySearch và các điều kiện visibility, return None
+    #     return None
+    _CLEAN_RE = re.compile(r"[^\w\s\u00C0-\u024F\u1E00-\u1EFF]", re.UNICODE)
 
-    #     accounts = await acc_cursor.to_list(length=None)
-    #     if not accounts:
-    #         return None
+    @classmethod
+    def extract_keywords(cls, text: str) -> list[str]:
+        if not text:
+            return []
+        cleaned = cls._CLEAN_RE.sub(" ", text.lower())
+        seen = set()
+        result = []
+        for w in cleaned.split():
+            if len(w) >= 2 and w not in seen:
+                seen.add(w)
+                result.append(w)
+        return result
 
-    #     email_list = [acc["email"] for acc in accounts]
-
-    #     # 6. Query post department + visibility
-    #     post_cursor = PostRepository.collection.find(
-    #         {
-    #             "createdBy": {"$in": email_list},
-    #             "status": "active",
-    #             **visibility_condition
-    #         }
-    #     ).sort("createdAt", -1).limit(20)
-
-    #     posts = await post_cursor.to_list(length=None)
-
-    #     # 7. Mutual block filter trên fallback posts
-    #     final_posts = []
-    #     for post in posts:
-    #         author = await AccountRepository.collection.find_one({"email": post.get("createdBy")})
-    #         if not author:
-    #             continue
-    #         if my_email in author["userInfo"].get("blocks", []):
-    #             continue
-    #         final_posts.append(post)
-
-    #     return final_posts if final_posts else None
+    @classmethod
+    def calc_score(cls, keywords: list[str], title: str, content: str, search_text: str) -> float:
+        if not keywords:
+            return 0.0
+        t, c = title.lower(), content.lower()
+        kw_scores = [max(fuzz.partial_ratio(k, t), fuzz.partial_ratio(k, c)) for k in keywords]
+        avg_kw = sum(kw_scores) / len(kw_scores)
+        max_kw = max(kw_scores)
+        full = max(fuzz.token_set_ratio(t, search_text), fuzz.token_set_ratio(c, search_text))
+        return max(avg_kw * 0.7 + max_kw * 0.3, full * 0.85)
 
     @staticmethod
     async def find_post_by_keysearch_and_department(
         keySearch: str,
-        department: str,
-        myAccount: dict
-    ) -> Optional[list[dict]]:
-
-        from rapidfuzz import fuzz
+        department: str,  # Department của người đang search (dùng để ưu tiên/loại?)
+        myAccount: dict,
+    ) -> list[dict]:
 
         my_email = myAccount.get("email")
-        # Lấy danh sách email follow 2 chiều
-        my_followed = set(myAccount["userInfo"].get("followed", []))
-        # mutual_follow = list(my_followers.intersection(my_followed))
-        mutual_follow = list(my_followed)
+        my_followed = set(myAccount.get("userInfo", {}).get("followed", []))
+        my_blocks = myAccount.get("userInfo", {}).get("blocks", [])
 
-        # Danh sách email bị block bởi tài khoản đang search
-        my_blocks = myAccount["userInfo"].get("blocks", [])
+        keywords = PostRepository.extract_keywords(keySearch)
+        if not keywords:
+            return []
 
         # Visibility conditions
-        visibility_condition = {
-            "$or": [
-                # PUBLIC nhưng không phải của account bạn đã block
-                {
-                    "visibility": "public",
-                    "createdBy": {"$nin": my_blocks}
-                },
-                # FOLLOW nhưng phải mutual follow
-                {
-                    "visibility": "follow",
-                    "createdBy": {"$in": mutual_follow}
-                }
-            ]
-        }
-
-        # 1. Tách keySearch thành từ
-        parts = keySearch.lower().split()
-
-        # 2. Regex sơ bộ
-        regex_conditions = [
-            {
-                "$or": [
-                    {"title": {"$regex": part[:2], "$options": "i"}},
-                    {"content": {"$regex": part[:2], "$options": "i"}},
-                ]
-            }
-            for part in parts if len(part) >= 2
+        visibility = [
+            {"visibility": "public", "createdBy": {"$nin": my_blocks}},
+            {"visibility": "follow", "createdBy": {"$in": list(my_followed)}},
         ]
 
-        # 3. Query các post ứng viên theo regex + visibility
-        cursor = PostRepository.collection.find({
-            "$or": regex_conditions,
-            "status": "active",
-            **visibility_condition
-        })
+        # Regex: mỗi keyword match title hoặc content
+        regex_conds = [
+            {"$or": [
+                {"title": {"$regex": kw, "$options": "i"}},
+                {"content": {"$regex": kw, "$options": "i"}},
+            ]}
+            for kw in keywords
+        ]
 
-        candidates = await cursor.to_list(length=None)
+        query = {"$and": [
+            {"$or": regex_conds},
+            {"status": "active"},
+            {"$or": visibility},
+        ]}
 
-        # 4. Fuzzy filter + mutual block check
+        candidates = await PostRepository.collection.find(query).to_list(length=None)
+
         matched = []
+        search_lower = keySearch.lower()
+
         for post in candidates:
-            # Lấy thông tin account tạo post để kiểm tra mutual block
-            author = await AccountRepository.collection.find_one({"email": post.get("createdBy")})
+            author_email = post.get("createdBy")
+            if not author_email:
+                continue
+
+            # Lấy thông tin author để check mutual block + department
+            author = await AccountRepository.collection.find_one(
+                {"email": author_email},
+                {"userInfo.blocks": 1, "userInfo.department": 1}
+            )
             if not author:
                 continue
 
-            author_blocks = author["userInfo"].get("blocks", [])
-            # Nếu author đã block bạn → skip
+            # Mutual block check
+            author_blocks = author.get("userInfo", {}).get("blocks", [])
             if my_email in author_blocks:
                 continue
 
-            # Fuzzy match
-            title = post.get("title", "").lower()
-            content = post.get("content", "").lower()
-            score = max(
-                fuzz.token_sort_ratio(title, keySearch.lower()),
-                fuzz.token_sort_ratio(content, keySearch.lower())
+            # NẾU muốn filter theo department của author (không phải của post)
+            # Bỏ comment đoạn này nếu cần:
+            # author_dept = author.get("userInfo", {}).get("department", "")
+            # if department and department.strip():
+            #     if author_dept.upper() != department.strip().upper():
+            #         continue  # Skip post của author khác department
+
+            # Score
+            score = PostRepository.calc_score(
+                keywords,
+                post.get("title", ""),
+                post.get("content", ""),
+                search_lower
             )
+
             if score >= 50:
+                post["_score"] = score
+                # Thêm department của author vào kết quả để FE hiển thị
+                post["_authorDepartment"] = author.get("userInfo", {}).get("department", "")
                 matched.append(post)
 
-        # Sort theo createdAt giảm dần
-        if matched:
-            matched.sort(key=lambda p: p.get("createdAt"), reverse=True)
-            return matched
+        matched.sort(
+            key=lambda p: (p.pop("_score", 0), p.get("createdAt", "")),
+            reverse=True
+        )
 
-        # Nếu không có bài viết nào phù hợp với keySearch và các điều kiện visibility, return None
-        return None
+        # Dọn dẹp field tạm
+        for p in matched:
+            p.pop("_authorDepartment", None)
+
+        return matched
 
     @staticmethod
     async def get_post_of_day() -> int:

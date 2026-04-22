@@ -15,7 +15,6 @@ from services.interfaces.search_service_interface import ISearchService
 class SearchServiceImpl(ISearchService):
     
     async def search_account(self, req: SearchAccountRequest) -> Optional[SearchAccountResponse]:
-        print(req)
         dic_acc = await AccountRepository.find_by_email(req.email)
         list_dic = await AccountRepository.find_by_fullname(req.keySearch, dic_acc)
         list_rs: List[Account] = []

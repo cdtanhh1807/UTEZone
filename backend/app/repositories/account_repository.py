@@ -1,8 +1,8 @@
 from bson import ObjectId
 from core.database import db
-from typing import Optional
+from typing import List, Optional
 from rapidfuzz import fuzz
-
+import re
 
 class AccountRepository:
 
@@ -77,17 +77,90 @@ class AccountRepository:
         )
         return await AccountRepository.find_by_id(account_id)
     
+    # @staticmethod
+    # async def find_by_fullname(keySearch: str, myAccount: dict) -> Optional[list[dict]]:
+    #     from rapidfuzz import fuzz
+
+    #     my_email = myAccount.get("email")
+    #     my_blocks = myAccount["userInfo"].get("blocks", [])
+
+    #     # 1. Tách keySearch thành các từ
+    #     parts = keySearch.lower().split()
+
+    #     # 2. Tạo regex sơ bộ
+    #     regex_conditions = [
+    #         {
+    #             "userInfo.fullName": {
+    #                 "$regex": part[:2],
+    #                 "$options": "i"
+    #             }
+    #         }
+    #         for part in parts if len(part) >= 2
+    #     ]
+
+    #     if not regex_conditions:
+    #         regex_conditions = [{"userInfo.fullName": {"$regex": ".*"}}]
+
+    #     # 3. Query sơ bộ: loại bỏ account bị block bởi bạn
+    #     cursor = AccountRepository.collection.find({
+    #         "$or": regex_conditions,
+    #         "email": {"$nin": my_blocks}   # bạn đã block
+    #     })
+
+    #     candidates = await cursor.to_list(length=None)
+
+    #     if not candidates:
+    #         return None
+
+    #     # 4. Fuzzy filter + kiểm tra mutual block (tài khoản được tìm không block bạn)
+    #     results = []
+    #     for acc in candidates:
+    #         # Check mutual block
+    #         acc_blocks = acc["userInfo"].get("blocks", [])
+    #         if myAccount.get("email") in acc_blocks:
+    #             continue  # account này đã block bạn, loại bỏ
+
+    #         # Fuzzy match
+    #         full_name = acc["userInfo"]["fullName"]
+    #         score = fuzz.token_sort_ratio(full_name.lower(), keySearch.lower())
+    #         if score >= 50:
+    #             results.append(acc)
+
+    #     return results if results else None
     @staticmethod
-    async def find_by_fullname(keySearch: str, myAccount: dict) -> Optional[list[dict]]:
+    async def find_by_fullname(keySearch: str, myAccount: dict) -> Optional[List[dict]]:
         from rapidfuzz import fuzz
 
         my_email = myAccount.get("email")
         my_blocks = myAccount["userInfo"].get("blocks", [])
 
-        # 1. Tách keySearch thành các từ
+        # =========================
+        # 0. CHECK KEYSEARCH LÀ EMAIL
+        # =========================
+        email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if re.match(email_pattern, keySearch):
+            acc = await AccountRepository.find_by_email(keySearch)
+
+            if not acc:
+                return None
+
+            # ❌ bạn đã block họ
+            if acc["email"] in my_blocks:
+                return None
+
+            # ❌ họ đã block bạn
+            acc_blocks = acc["userInfo"].get("blocks", [])
+            if my_email in acc_blocks:
+                return None
+
+            # ✅ hợp lệ → return luôn
+            return [acc]
+
+        # =========================
+        # 1. FLOW CŨ (SEARCH NAME)
+        # =========================
         parts = keySearch.lower().split()
 
-        # 2. Tạo regex sơ bộ
         regex_conditions = [
             {
                 "userInfo.fullName": {
@@ -101,10 +174,9 @@ class AccountRepository:
         if not regex_conditions:
             regex_conditions = [{"userInfo.fullName": {"$regex": ".*"}}]
 
-        # 3. Query sơ bộ: loại bỏ account bị block bởi bạn
         cursor = AccountRepository.collection.find({
             "$or": regex_conditions,
-            "email": {"$nin": my_blocks}   # bạn đã block
+            "email": {"$nin": my_blocks}
         })
 
         candidates = await cursor.to_list(length=None)
@@ -112,17 +184,17 @@ class AccountRepository:
         if not candidates:
             return None
 
-        # 4. Fuzzy filter + kiểm tra mutual block (tài khoản được tìm không block bạn)
         results = []
         for acc in candidates:
-            # Check mutual block
             acc_blocks = acc["userInfo"].get("blocks", [])
-            if myAccount.get("email") in acc_blocks:
-                continue  # account này đã block bạn, loại bỏ
 
-            # Fuzzy match
+            # ❌ mutual block
+            if my_email in acc_blocks:
+                continue
+
             full_name = acc["userInfo"]["fullName"]
             score = fuzz.token_sort_ratio(full_name.lower(), keySearch.lower())
+
             if score >= 50:
                 results.append(acc)
 
