@@ -3,12 +3,14 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Security, status
 from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
+from dto.account.request.get_mod_request import GetModRequest
 from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.request.update_account_t_request import UpdateAccountTRequest
 from dto.account.response.account_info_response import AccountInfoResponse
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
+from dto.account.response.get_mod_response import GetModResponse
 from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
 from dto.account.response.update_account_t_response import UpdateAccountTResponse
@@ -230,3 +232,11 @@ async def get_account_relation(
         raise HTTPException(status_code=404, detail="Not found")
     return relation
 
+
+@router.get("/get_mod", response_model=GetModResponse)
+async def get_mod(
+    current_user: dict = Depends(get_current_user),
+    service: IAccountService = Depends(get_account_service)
+):  
+    req = GetModRequest()
+    return await service.get_mod(req)

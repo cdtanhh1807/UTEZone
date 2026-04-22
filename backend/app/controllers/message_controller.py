@@ -21,10 +21,19 @@ async def send_message(
     current_user: dict = Depends(get_current_user),
     service: IMessageService = Depends(get_message_service),
 ):
+    file_req: List[str] = []
+    media_req: List[str] = []
+    if req.media:
+        media_req = req.media
+    if req.file:
+        file_req = req.file
+
     return await service.send_message(
         sender_email=current_user["sub"],
         receiver_email=req.receiver_email,
         content=req.content,
+        file=file_req,
+        media=media_req,
     )
 
 

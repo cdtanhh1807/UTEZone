@@ -187,6 +187,15 @@ class ReportRepository:
         return result
 
         return reports
+    
+    @staticmethod
+    async def find_report_by_annunciator(email: str) -> list[dict]:
+        reports = []
+        async for report in ReportRepository.collection.find({
+            "annunciatorEmail": email
+        }):
+            reports.append(report)
+        return reports
 
 
 

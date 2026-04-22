@@ -8,12 +8,13 @@ from models.message_model import Message
 from repositories.account_repository import AccountRepository
 from fastapi import HTTPException, status
 from typing import List
+from services.other.file_service import FileService
 from websocket.connection_manager import manager
 
 
 class MessageServiceImpl(IMessageService):
     async def send_message(
-        self, sender_email: str, receiver_email: str, content: str
+        self, sender_email: str, receiver_email: str, content: str, file: List[str], media: List[str]
     ) -> Message:
         # Kiểm tra tài khoản nhận có tồn tại
         receiver = await AccountRepository.find_by_email(receiver_email)
@@ -26,7 +27,81 @@ class MessageServiceImpl(IMessageService):
         # Tạo conversation_id duy nhất
         conversation_id = "_".join(sorted([sender_email, receiver_email]))
 
-        msg = await MessageRepository.insert_message(
+        file_url: List[str] = []
+        media_url: List[str] = []
+        if len(file) > 0:
+            for f in file:
+                url = FileService.get_file_url(f)
+                file_url.append(url)
+        if len(media) > 0:
+            for m in media:
+                url = FileService.get_file_url(m)
+                media_url.append(url)
+
+        if len(file_url) > 0 and len(media_url) < 1:
+            if content:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        content=content.strip(),
+                        file=file_url,
+                    )
+                )
+            else:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        file=file_url,
+                    )
+                )
+        elif len(media_url) > 0 and len(file_url) < 1:
+            if content:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        content=content.strip(),
+                        media=media_url,
+                    )
+                )
+            else:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        media=media_url,
+                    )
+                )
+        elif len(media_url) > 0 and len(file_url) > 0:
+            if content:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        content=content.strip(),
+                        file=file_url,
+                        media=media_url,
+                    )
+                )
+            else:
+                msg = await MessageRepository.insert_message(
+                    Message(
+                        sender_email=sender_email,
+                        receiver_email=receiver_email,
+                        conversation_id=conversation_id,
+                        file=file_url,
+                        media=media_url,
+                    )
+                )
+        else:
+            msg = await MessageRepository.insert_message(
             Message(
                 sender_email=sender_email,
                 receiver_email=receiver_email,

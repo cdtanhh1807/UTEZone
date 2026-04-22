@@ -8,12 +8,14 @@ from redis import RedisError
 import requests
 from dto.account.request.follow_block_request import FollowBlockRequest
 from dto.account.request.get_all_account_request import GetAllAccountRequest
+from dto.account.request.get_mod_request import GetModRequest
 from dto.account.request.get_relation_request import GetRelationRequest
 from dto.account.request.google_auth_request import GoogleAuthRequest
 from dto.account.request.register_user_request import RegisterUserRequest
 from dto.account.request.update_account_request import UpdateAccountRequest
 from dto.account.response.follow_block_response import FollowBlockResponse
 from dto.account.response.get_all_account_response import GetAllAccountResponse
+from dto.account.response.get_mod_response import GetModResponse
 from dto.account.response.get_relation_response import GetRelationResponse
 from dto.account.response.register_user_response import RegisterUserResponse
 from dto.account.response.update_account_response import UpdateAccountResponse
@@ -339,3 +341,7 @@ class AccountServiceImpl(IAccountService):
             print(rs)
             return rs
         return None
+
+    async def get_mod(self, account_list: GetModRequest) -> Optional[GetModResponse]:
+        accounts = await AccountRepository.find_mod()
+        return GetModResponse(account_list=[Account(**bson_to_dict(account)) for account in accounts])

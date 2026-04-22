@@ -5,12 +5,14 @@ from core.dependency import get_report_service
 from dto.report.request.approve_report_request import ApproveReportRequest
 from dto.report.request.get_all_history_approve_request import GetAllHistoryApproveRequest
 from dto.report.request.get_all_report_request import GetAllReportRequest
+from dto.report.request.get_my_report_request import GetMyReportRequest
 from dto.report.request.reject_report_request import RejectReportRequest
 from dto.report.request.send_report_request import SendReportRequest
 from dto.report.request.update_report_request import UpdateReportRequest
 from dto.report.response.approve_report_response import ApproveReportResponse
 from dto.report.response.get_all_history_approve_reponse import GetAllHistoryApproveResponse
 from dto.report.response.get_all_report_response import GetAllReportResponse
+from dto.report.response.get_my_report_response import GetMyReportResponse
 from dto.report.response.reject_report_response import RejectReportResponse
 from dto.report.response.send_report_response import SendReportResponse
 from dto.report.response.update_report_response import UpdateReportResponse
@@ -120,3 +122,11 @@ async def list_report(
     print(rs)
     print("ahuhu")
     return rs
+
+@router.get("/get_my_report", response_model=List[GetMyReportResponse])
+async def get_my_report(
+    current_user: dict = Depends(get_current_user),
+    service: IReportService = Depends(get_report_service)
+):
+    req = GetMyReportRequest(email=current_user["sub"])
+    return await service.get_my_report(req)

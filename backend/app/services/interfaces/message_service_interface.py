@@ -9,7 +9,7 @@ from typing import List
 class IMessageService(ABC):
     @abstractmethod
     async def send_message(
-        self, sender_email: str, receiver_email: str, content: str
+        self, sender_email: str, receiver_email: str, content: str, file: List[str], media: List[str]
     ) -> Message:
         pass
 

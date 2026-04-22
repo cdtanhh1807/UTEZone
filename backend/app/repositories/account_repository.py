@@ -209,7 +209,17 @@ class AccountRepository:
             'blocks': [e for e in blocks if e in active_emails],
         }
 
-
+    @staticmethod
+    async def find_mod() -> list[dict]:
+        accounts = []
+        query = {
+            "role": "Moderator",
+            "status": "active",
+            "hidden": {"$exists": False} 
+        }
+        async for account in AccountRepository.collection.find(query):
+            accounts.append(account)
+        return accounts
 
     
 
