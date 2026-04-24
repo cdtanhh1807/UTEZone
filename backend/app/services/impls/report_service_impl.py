@@ -19,7 +19,7 @@ from dto.report.response.ban_report_response import BanReportResponse
 from dto.report.response.get_all_history_approve_reponse import GetAllHistoryApproveResponse
 from dto.report.response.get_all_report_response import GetAllReportResponse, GetAllReport, Annunciator
 from dto.report.response.get_my_report_response import GetMyReportResponse
-from dto.report.response.get_report_me_response import GetReportMeResponse
+from dto.report.response.get_report_me_response import GetReportMeResponse, ReportGroup
 from dto.report.response.reject_report_response import RejectReportResponse
 from dto.report.response.send_report_response import SendReportResponse
 from dto.report.response.update_report_response import UpdateReportResponse
@@ -242,13 +242,13 @@ class ReportServiceImpl(IReportService):
         return result
 
     async def reject(self, report_req: RejectReportRequest) -> Optional[RejectReportResponse]:
-        updated_report = await ReportRepository.update_check_by_element(report_req.model_dump(exclude_none=True), report_req.rejectBy)
+        updated_report = await ReportRepository.update_check_by_element(report_req.model_dump(exclude_none=True), report_req.rejectBy, status="reject")
         if updated_report:
             return RejectReportResponse(success=True, message="Ok")
         return RejectReportResponse(success=False, message="Error")
 
     async def approve(self, report_req: ApproveReportRequest) -> Optional[ApproveReportResponse]:
-        updated_report = await ReportRepository.update_check_by_element(report_req.model_dump(exclude_none=True), report_req.approveBy)
+        updated_report = await ReportRepository.update_check_by_element(report_req.model_dump(exclude_none=True), report_req.approveBy, status="approve")
         if updated_report:
             update_violation: str = None
             #announce
@@ -529,16 +529,61 @@ class ReportServiceImpl(IReportService):
             rs.append(rp)
         return rs
     
-    async def get_report_me(self, req: GetReportMeRequest) -> List[GetReportMeResponse]:
+    # async def get_report_me(self, req: GetReportMeRequest) -> List[GetReportMeResponse]:
+    #     dic_list = await ReportRepository.find_report_with_violator(req.email)
+    #     rs: List[GetReportMeResponse] = []
+    #     for dic in dic_list:
+    #         acc_service = AccountServiceImpl()
+    #         acc_if: Account = await acc_service.get_account_by_email(dic["annunciatorEmail"])
+    #         dic["annunciatorName"] = acc_if.userInfo.fullName
+    #         rp: GetReportMeResponse = GetReportMeResponse(**bson_to_dict(dic))
+    #         rs.append(rp)
+    #     return rs
+    async def get_report_me(self, req: GetReportMeRequest) -> List[ReportGroup]:
         dic_list = await ReportRepository.find_report_with_violator(req.email)
-        rs: List[GetReportMeResponse] = []
+        
+        acc_service = AccountServiceImpl()
+        grouped = {}
+
         for dic in dic_list:
-            acc_service = AccountServiceImpl()
+            # Lấy tên người report
             acc_if: Account = await acc_service.get_account_by_email(dic["annunciatorEmail"])
             dic["annunciatorName"] = acc_if.userInfo.fullName
+
             rp: GetReportMeResponse = GetReportMeResponse(**bson_to_dict(dic))
-            rs.append(rp)
-        return rs
+
+            # 🔥 Xác định key để group
+            if rp.typeContent == "account":
+                key = rp.violatorEmail
+            else:
+                key = rp.contentId
+
+            if key not in grouped:
+                grouped[key] = {
+                    "key": key,
+                    "typeContent": rp.typeContent,
+                    "announciators": {},
+                    "reports": []
+                }
+
+            # Thêm report
+            grouped[key]["reports"].append(rp)
+
+            # Thêm announciator (tránh duplicate)
+            email = rp.annunciatorEmail
+            if email not in grouped[key]["announciators"]:
+                grouped[key]["announciators"][email] = {
+                    "email": email,
+                    "name": rp.annunciatorName
+                }
+
+        # Convert announciators dict -> list
+        result = []
+        for g in grouped.values():
+            g["announciators"] = list(g["announciators"].values())
+            result.append(ReportGroup(**g))
+
+        return result
         
     
 

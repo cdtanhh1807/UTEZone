@@ -58,7 +58,7 @@ class ReportRepository:
         return await ReportRepository.find_by_id(report_id)
     
     @staticmethod
-    async def update_check_by_element(data: dict, approveBy: str):
+    async def update_check_by_element(data: dict, approveBy: str, status: str):
         element = data.get("element")
         elementId = data.get("elementId")
         policyId = data.get("policyId")
@@ -83,7 +83,7 @@ class ReportRepository:
             return None
 
         update_query = {
-            "$set": {"check": True, "approveBy": approveBy, "approveAt": timestamp}
+            "$set": {"check": True, "approveBy": approveBy, "approveAt": timestamp, "status": status}
         }
 
         try:

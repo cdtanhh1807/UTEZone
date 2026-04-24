@@ -18,6 +18,7 @@ class Report(BaseModel):
     reportedAt: datetime
     approveBy: Optional[str] = None
     approveAt: Optional[datetime] = None
+    status: Optional[str] = None
     # verifyStatus: bool
 
     class Config:

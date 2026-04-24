@@ -21,6 +21,7 @@ class GetMyReportResponse(BaseModel):
     check: bool
     approveBy: Optional[str] = None
     approveAt: Optional[datetime] = None
+    status: Optional[str] = None
     
     class Config:
         validate_by_name = True

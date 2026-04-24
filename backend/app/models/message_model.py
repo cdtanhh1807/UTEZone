@@ -11,9 +11,9 @@ class Message(BaseModel):
     sender_email: EmailStr
     receiver_email: EmailStr
     conversation_id: str          # "<min_email>_<max_email>"
-    content: str
-    file: Optional[List[str]]
-    media: Optional[List[str]]
+    content: Optional[List[str]] = None
+    file: Optional[List[str]] = None
+    media: Optional[List[str]] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

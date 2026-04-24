@@ -46,18 +46,20 @@ class MessageServiceImpl(IMessageService):
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
                         content=content.strip(),
-                        file=file_url,
+                        file=file,
                     )
                 )
+                msg.file = file_url
             else:
                 msg = await MessageRepository.insert_message(
                     Message(
                         sender_email=sender_email,
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
-                        file=file_url,
+                        file=file,
                     )
                 )
+                msg.file = file_url
         elif len(media_url) > 0 and len(file_url) < 1:
             if content:
                 msg = await MessageRepository.insert_message(
@@ -66,18 +68,20 @@ class MessageServiceImpl(IMessageService):
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
                         content=content.strip(),
-                        media=media_url,
+                        media=media,
                     )
                 )
+                msg.media = media_url
             else:
                 msg = await MessageRepository.insert_message(
                     Message(
                         sender_email=sender_email,
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
-                        media=media_url,
+                        media=media,
                     )
                 )
+                msg.media = media_url
         elif len(media_url) > 0 and len(file_url) > 0:
             if content:
                 msg = await MessageRepository.insert_message(
@@ -86,20 +90,24 @@ class MessageServiceImpl(IMessageService):
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
                         content=content.strip(),
-                        file=file_url,
-                        media=media_url,
+                        file=file,
+                        media=media,
                     )
                 )
+                msg.file = file_url
+                msg.media = media_url
             else:
                 msg = await MessageRepository.insert_message(
                     Message(
                         sender_email=sender_email,
                         receiver_email=receiver_email,
                         conversation_id=conversation_id,
-                        file=file_url,
-                        media=media_url,
+                        file=file,
+                        media=media,
                     )
                 )
+                msg.file = file_url
+                msg.media = media_url
         else:
             msg = await MessageRepository.insert_message(
             Message(
@@ -130,6 +138,21 @@ class MessageServiceImpl(IMessageService):
     ) -> List[Message]:
         conversation_id = "_".join(sorted([user_a, user_b]))
         msgs = await MessageRepository.get_conversation(conversation_id, skip, limit)
+
+        for msg in msgs:
+            if msg.file:
+                urls_file: List[List] = []
+                for f in msg.file:
+                    url = FileService.get_file_url(f)
+                    urls_file.append(url)
+                msg.file = urls_file
+            if msg.media:
+                urls_media: List[str] = []
+                for m in msg.media:
+                    url = FileService.get_file_url(m)
+                    urls_media.append(url)
+                msg.media = urls_media
+
         return sorted(msgs, key=lambda m: m.created_at)
     
     async def get_conversations(self, email: str) -> List[ConversationResponse]:

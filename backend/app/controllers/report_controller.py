@@ -14,7 +14,7 @@ from dto.report.response.approve_report_response import ApproveReportResponse
 from dto.report.response.get_all_history_approve_reponse import GetAllHistoryApproveResponse
 from dto.report.response.get_all_report_response import GetAllReportResponse
 from dto.report.response.get_my_report_response import GetMyReportResponse
-from dto.report.response.get_report_me_response import GetReportMeResponse
+from dto.report.response.get_report_me_response import GetReportMeResponse, ReportGroup
 from dto.report.response.reject_report_response import RejectReportResponse
 from dto.report.response.send_report_response import SendReportResponse
 from dto.report.response.update_report_response import UpdateReportResponse
@@ -118,11 +118,7 @@ async def list_report(
     if (current_user["role"] != "Administrator"):
         raise HTTPException(status_code=403, detail="Failed!")
     req = GetTopReportRequest()
-    print("ahuhu")
     rs= await service.get_top_report(req)
-    print("ahihi")
-    print(rs)
-    print("ahuhu")
     return rs
 
 @router.get("/get_my_report", response_model=List[GetMyReportResponse])
@@ -134,7 +130,7 @@ async def get_my_report(
     return await service.get_my_report(req)
 
 
-@router.get("/get_report_me", response_model=List[GetReportMeResponse])
+@router.get("/get_report_me", response_model=List[ReportGroup])
 async def get_report_me(
     current_user: dict = Depends(get_current_user),
     service: IReportService = Depends(get_report_service)
