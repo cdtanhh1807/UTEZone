@@ -25,6 +25,7 @@ from models.account_model import Account
 from repositories.account_repository import AccountRepository
 from services.interfaces.account_service_interface import IAccountService
 from models.base_model import bson_to_dict
+from services.other.file_service import FileService
 from utils.security import decode_access_token
 from core.redis import set_otp, get_otp, delete_otp, blacklist_token
 from core.mailer import send_email
@@ -363,13 +364,14 @@ class AccountServiceImpl(IAccountService):
         suggestion_items = []
         for account in suggestions:
             user_info = account.get("userInfo", {})
-            
+            avt_url = FileService.get_file_url(user_info.get("avatar"))
+
             suggestion_items.append(SuggestFollowItem(
                 id=str(account.get("_id")),
                 email=account.get("email"),
                 fullName=user_info.get("fullName"),
                 department=user_info.get("department"),
-                avatar=user_info.get("avatar"),
+                avatar=avt_url,
                 description=user_info.get("description"),
                 interaction_score=account.get("_interaction_score", 0),
                 posts_count=account.get("_posts_count", 0),

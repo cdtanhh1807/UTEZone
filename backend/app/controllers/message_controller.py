@@ -23,15 +23,18 @@ async def send_message(
 ):
     file_req: List[str] = []
     media_req: List[str] = []
+    content: str = None
     if req.media:
         media_req = req.media
     if req.file:
         file_req = req.file
+    if req.content:
+        content = req.content
 
     return await service.send_message(
         sender_email=current_user["sub"],
         receiver_email=req.receiver_email,
-        content=req.content,
+        content=content,
         file=file_req,
         media=media_req,
     )
